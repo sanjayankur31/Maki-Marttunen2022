@@ -1,0 +1,21 @@
+load_file("stdlib.hoc")
+load_file("stdrun.hoc")
+track_data=1
+load_file("params.hoc")
+load_file("model.hoc")
+
+objref  transvec
+transvec = new Vector(40)
+
+
+objref p_file
+p_file = new File()
+p_file.ropen("best.params")
+                transvec.scanf(p_file)
+		transvec.printf
+p_file.close()
+
+
+load_file("main.hoc")
+tfunk()
+

@@ -1,0 +1,41 @@
+<html>
+    <body>
+This entry contains the scripts for simulating the model of our article "Excitatory and inhibitory effects of HCN channel modulation on excitability of layer V pyramidal cells".<br>
+<br>
+Two folders are included in this ModelDB entry:<br>
+<code>modulhcn_almog</code><br>
+<code>modulhcn_hay</code><br>
+<br>
+Before running any simulations, run "nrnivmodl" in both folders to compile the .mod mechanisms.<br>
+<br>
+To run the simulations for Fig. 1 and draw the results, run the following commands:<br>
+<font color=green><pre>
+cd modulhcn_almog
+sh runfig1.sh     
+cd ../modulhcn_hay
+sh runfig1.sh      
+cd ..
+python3 drawfig1.py</pre>
+</font>
+
+In the same way, to draw Fig. 2-6, do the same procedure, replacing '1' by numbers 2-6.
+Note that Fig. 3 and Fig. 5 re-use data from Fig. 2, so run runfig2.sh in addition to runfig3.sh and runfig5.sh to be able to draw the figures (and similarly, Fig. 6 re-uses data from Fig. 4).<br>
+<br>
+Approximate simulation times:
+<pre>
+modulhcn_almog/runfig1.sh: 1-2 days
+modulhcn_almog/runfig2.sh: 2-3 hours
+modulhcn_almog/runfig3.sh: 2 hours
+modulhcn_almog/runfig4.sh: 4-7 days
+
+modulhcn_hay/runfig1.sh: 3-6 hours
+modulhcn_hay/runfig2.sh: 20 min
+modulhcn_hay/runfig3.sh: 30 min
+modulhcn_hay/runfig4.sh: 1-2 days
+modulhcn_hay/runfig5.sh: 5-10 days
+modulhcn_hay/runfig6.sh: 2-3 days
+
+
+</pre>
+</body>
+</html>
