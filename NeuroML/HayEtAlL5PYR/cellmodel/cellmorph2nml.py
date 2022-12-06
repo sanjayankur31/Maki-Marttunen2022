@@ -15,6 +15,7 @@ import sys
 
 import pyneuroml
 from pyneuroml.neuron import export_to_neuroml2
+from pyneuroml.plot.PlotMorphology import plot_2D
 from neuron import h
 
 
@@ -53,8 +54,20 @@ def main(acell):
     os.remove(loader_hoc_file)
 
 
+def plot_morph(acell):
+    """Plot morphology
+
+    :param acell: name of cell
+    :returns: None
+    """
+    for plane in ["xy", "yz", "zx"]:
+        plot_2D(f"{acell}.morph.cell.nml", plane2d=plane, nogui=True,
+                save_to_file=f"{acell}.morph.{plane}.png")
+
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("This script only accepts one argument.")
         sys.exit(1)
-    main(sys.argv[1])
+    # main(sys.argv[1])
+    plot_morph(sys.argv[1])
