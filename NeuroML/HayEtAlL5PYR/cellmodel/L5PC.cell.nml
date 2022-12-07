@@ -22382,6 +22382,12 @@
             </segmentGroup>
             <segmentGroup id="basal_dendrite_group" neuroLexId="GO:0030425">
                 <notes>Basal dendrites</notes>
+                <include segmentGroup="dend_56"/>
+                <include segmentGroup="dend_57"/>
+                <include segmentGroup="dend_23"/>
+                <include segmentGroup="dend_24"/>
+                <include segmentGroup="dend_31"/>
+                <include segmentGroup="dend_59"/>
                 <include segmentGroup="dend_81"/>
                 <include segmentGroup="dend_79"/>
                 <include segmentGroup="dend_42"/>
@@ -22460,15 +22466,24 @@
                 <include segmentGroup="dend_22"/>
                 <include segmentGroup="dend_27"/>
                 <include segmentGroup="dend_32"/>
-                <include segmentGroup="dend_56"/>
-                <include segmentGroup="dend_57"/>
-                <include segmentGroup="dend_23"/>
-                <include segmentGroup="dend_24"/>
-                <include segmentGroup="dend_31"/>
-                <include segmentGroup="dend_59"/>
             </segmentGroup>
             <segmentGroup id="apical_dendrite_group" neuroLexId="GO:0030425">
                 <notes>Apical dendrite_group</notes>
+                <include segmentGroup="apic_14"/>
+                <include segmentGroup="apic_82"/>
+                <include segmentGroup="apic_91"/>
+                <include segmentGroup="apic_96"/>
+                <include segmentGroup="apic_93"/>
+                <include segmentGroup="apic_94"/>
+                <include segmentGroup="apic_83"/>
+                <include segmentGroup="apic_86"/>
+                <include segmentGroup="apic_90"/>
+                <include segmentGroup="apic_11"/>
+                <include segmentGroup="apic_15"/>
+                <include segmentGroup="apic_20"/>
+                <include segmentGroup="apic_6"/>
+                <include segmentGroup="apic_26"/>
+                <include segmentGroup="apic_95"/>
                 <include segmentGroup="apic_84"/>
                 <include segmentGroup="apic_85"/>
                 <include segmentGroup="apic_16"/>
@@ -22563,21 +22578,6 @@
                 <include segmentGroup="apic_89"/>
                 <include segmentGroup="apic_92"/>
                 <include segmentGroup="apic_5"/>
-                <include segmentGroup="apic_14"/>
-                <include segmentGroup="apic_82"/>
-                <include segmentGroup="apic_91"/>
-                <include segmentGroup="apic_96"/>
-                <include segmentGroup="apic_93"/>
-                <include segmentGroup="apic_94"/>
-                <include segmentGroup="apic_83"/>
-                <include segmentGroup="apic_86"/>
-                <include segmentGroup="apic_90"/>
-                <include segmentGroup="apic_11"/>
-                <include segmentGroup="apic_15"/>
-                <include segmentGroup="apic_20"/>
-                <include segmentGroup="apic_6"/>
-                <include segmentGroup="apic_26"/>
-                <include segmentGroup="apic_95"/>
                 <inhomogeneousParameter id="PathLengthOverApicDends" variable="p" metric="Path Length from root">
                     <proximal translationStart="0.0"/>
                 </inhomogeneousParameter>
@@ -22597,6 +22597,42 @@
                 <include segmentGroup="apical_dendrite_group"/>
             </segmentGroup>
             <segmentGroup id="all">
+                <include segmentGroup="apic_64"/>
+                <include segmentGroup="apic_104"/>
+                <include segmentGroup="apic_63"/>
+                <include segmentGroup="apic_1"/>
+                <include segmentGroup="apic_59"/>
+                <include segmentGroup="dend_81"/>
+                <include segmentGroup="apic_58"/>
+                <include segmentGroup="dend_80"/>
+                <include segmentGroup="apic_56"/>
+                <include segmentGroup="dend_71"/>
+                <include segmentGroup="apic_55"/>
+                <include segmentGroup="dend_64"/>
+                <include segmentGroup="apic_43"/>
+                <include segmentGroup="dend_46"/>
+                <include segmentGroup="apic_42"/>
+                <include segmentGroup="dend_43"/>
+                <include segmentGroup="apic_77"/>
+                <include segmentGroup="dend_41"/>
+                <include segmentGroup="apic_76"/>
+                <include segmentGroup="dend_40"/>
+                <include segmentGroup="apic_73"/>
+                <include segmentGroup="dend_34"/>
+                <include segmentGroup="apic_72"/>
+                <include segmentGroup="dend_17"/>
+                <include segmentGroup="apic_66"/>
+                <include segmentGroup="dend_11"/>
+                <include segmentGroup="apic_65"/>
+                <include segmentGroup="dend_8"/>
+                <include segmentGroup="dend_6"/>
+                <include segmentGroup="dend_1"/>
+                <include segmentGroup="apic_106"/>
+                <include segmentGroup="apic_105"/>
+                <include segmentGroup="apic_99"/>
+                <include segmentGroup="apic_2"/>
+                <include segmentGroup="dend_83"/>
+                <include segmentGroup="dend_82"/>
                 <include segmentGroup="dend_73"/>
                 <include segmentGroup="dend_72"/>
                 <include segmentGroup="dend_68"/>
@@ -22757,77 +22793,42 @@
                 <include segmentGroup="apic_71"/>
                 <include segmentGroup="axon_1"/>
                 <include segmentGroup="apic_70"/>
-                <include segmentGroup="apic_104"/>
-                <include segmentGroup="apic_64"/>
-                <include segmentGroup="apic_1"/>
-                <include segmentGroup="apic_63"/>
-                <include segmentGroup="dend_81"/>
-                <include segmentGroup="apic_59"/>
-                <include segmentGroup="dend_80"/>
-                <include segmentGroup="apic_58"/>
-                <include segmentGroup="dend_71"/>
-                <include segmentGroup="apic_56"/>
-                <include segmentGroup="dend_64"/>
-                <include segmentGroup="apic_55"/>
-                <include segmentGroup="dend_46"/>
-                <include segmentGroup="apic_43"/>
-                <include segmentGroup="dend_43"/>
-                <include segmentGroup="apic_42"/>
-                <include segmentGroup="dend_41"/>
-                <include segmentGroup="apic_77"/>
-                <include segmentGroup="dend_40"/>
-                <include segmentGroup="apic_76"/>
-                <include segmentGroup="dend_34"/>
-                <include segmentGroup="apic_73"/>
-                <include segmentGroup="dend_17"/>
-                <include segmentGroup="apic_72"/>
-                <include segmentGroup="dend_11"/>
-                <include segmentGroup="apic_66"/>
-                <include segmentGroup="dend_8"/>
-                <include segmentGroup="apic_65"/>
-                <include segmentGroup="dend_6"/>
-                <include segmentGroup="dend_1"/>
-                <include segmentGroup="apic_106"/>
-                <include segmentGroup="apic_105"/>
-                <include segmentGroup="apic_99"/>
-                <include segmentGroup="apic_2"/>
-                <include segmentGroup="dend_83"/>
-                <include segmentGroup="dend_82"/>
             </segmentGroup>
         </morphology>
         <biophysicalProperties id="biophys">
             <membraneProperties>
-                <channelDensity id="pas" ionChannel="pas" condDensity="0.0000338 S_per_cm2" erev="-90 mV" segmentGroup="soma_group" ion="non_specific"/>
-                <channelDensity id="SK_E2_somatic" ionChannel="SK_E2" condDensity="0.441 S_per_cm2" erev="-85 mV" segmentGroup="soma_group" ion="k"/>
+                <channelDensity id="pas_all" ionChannel="pas" condDensity="0.0000 S_per_cm2" erev="-90 mV" ion="non_specific"/>
+                <channelDensity id="pas_somatic" ionChannel="pas" condDensity="0.0000338 S_per_cm2" erev="-90 mV" segmentGroup="soma_group" ion="non_specific"/>
+                <channelDensity id="SK_E2_somatic" ionChannel="SK_E2" condDensity="0.0441 S_per_cm2" erev="-85 mV" segmentGroup="soma_group" ion="k"/>
                 <channelDensity id="SKv3_1_somatic" ionChannel="SKv3_1" condDensity="0.693 S_per_cm2" erev="-85 mV" segmentGroup="soma_group" ion="k"/>
                 <channelDensity id="K_Tst_somatic" ionChannel="K_Tst" condDensity="0.0812 S_per_cm2" erev="-85 mV" segmentGroup="soma_group" ion="k"/>
                 <channelDensity id="K_Pst_somatic" ionChannel="K_Pst" condDensity="0.00223 S_per_cm2" erev="-85 mV" segmentGroup="soma_group" ion="k"/>
                 <channelDensity id="Ih_somatic" ionChannel="Ih" condDensity="0.0002 S_per_cm2" erev="-45 mV" segmentGroup="soma_group" ion="hcn"/>
                 <channelDensity id="NaTa_t_somatic" ionChannel="NaTa_t" condDensity="2.04 S_per_cm2" erev="50 mV" segmentGroup="soma_group" ion="na"/>
                 <channelDensity id="Nap_Et2_somatic" ionChannel="Nap_Et2" condDensity="0.00172 S_per_cm2" erev="50 mV" segmentGroup="soma_group" ion="na"/>
-                <channelDensity id="pas" ionChannel="pas" condDensity="0.0000589 S_per_cm2" erev="-90 mV" segmentGroup="apical_dendrite_group" ion="non_specific"/>
+                <channelDensity id="pas_apical" ionChannel="pas" condDensity="0.0000589 S_per_cm2" erev="-90 mV" segmentGroup="apical_dendrite_group" ion="non_specific"/>
                 <channelDensity id="SK_E2_apical" ionChannel="SK_E2" condDensity="0.0012 S_per_cm2" erev="-85 mV" segmentGroup="apical_dendrite_group" ion="k"/>
                 <channelDensity id="SKv3_1_apical" ionChannel="SKv3_1" condDensity="0.000261 S_per_cm2" erev="-85 mV" segmentGroup="apical_dendrite_group" ion="k"/>
                 <channelDensity id="Im_apical" ionChannel="Im" condDensity="0.0000675 S_per_cm2" erev="-85 mV" segmentGroup="apical_dendrite_group" ion="k"/>
                 <channelDensity id="NaTa_t_axonal" ionChannel="NaTa_t" condDensity="0.0213 S_per_cm2" erev="50 mV" segmentGroup="apical_dendrite_group" ion="na"/>
-                <channelDensity id="pas" ionChannel="pas" condDensity="0.0000467 S_per_cm2" erev="-90 mV" segmentGroup="apical_dendrite_group" ion="non_specific"/>
-                <channelDensity id="Ih_basal" ionChannel="Ih" condDensity="0.0002 S_per_cm2" erev="-45 mV" segmentGroup="apical_dendrite_group" ion="hcn"/>
-                <channelDensity id="pas" ionChannel="pas" condDensity="0.0000325 S_per_cm2" erev="-90 mV" segmentGroup="axon_group" ion="non_specific"/>
+                <channelDensity id="pas_basal" ionChannel="pas" condDensity="0.0000467 S_per_cm2" erev="-90 mV" segmentGroup="basal_dendrite_group" ion="non_specific"/>
+                <channelDensity id="Ih_basal" ionChannel="Ih" condDensity="0.0002 S_per_cm2" erev="-45 mV" segmentGroup="basal_dendrite_group" ion="hcn"/>
+                <channelDensity id="pas_axonal" ionChannel="pas" condDensity="0.0000325 S_per_cm2" erev="-90 mV" segmentGroup="axon_group" ion="non_specific"/>
                 <channelDensityNernst id="Ca_HVA_somatic" ionChannel="Ca_HVA" condDensity="0.000992 S_per_cm2" segmentGroup="soma_group" ion="ca"/>
                 <channelDensityNernst id="Ca_LVAst_somatic" ionChannel="Ca_LVAst" condDensity="0.00343 S_per_cm2" segmentGroup="soma_group" ion="ca"/>
                 <channelDensityNonUniform id="Ih_apical" ionChannel="Ih" erev="-45 mV" ion="hcn">
                     <variableParameter parameter="condDensity" segmentGroup="apical_dendrite_group">
-                        <inhomogeneousValue inhomogeneousParameter="PathLengthOverApicDends" value="1E9 * (0.2 * 1E-8) * ((2.087 * exp( 3.6161 * (p/1300.5335))) - 0.8696)"/>
+                        <inhomogeneousValue inhomogeneousParameter="PathLengthOverApicDends" value="1E8 * (0.2 * 1E-8) * ((2.087 * exp( 3.6161 * (p/1300.5335))) - 0.8696)"/>
                     </variableParameter>
                 </channelDensityNonUniform>
                 <channelDensityNonUniformNernst id="Ca_LVA_apic" ionChannel="Ca_LVAst" ion="ca">
                     <variableParameter parameter="condDensity" segmentGroup="apical_dendrite_group">
-                        <inhomogeneousValue inhomogeneousParameter="PathLengthOverApicDends" value="1.0E9 * 1.0E-8 * 0.0187 * (0.01 + (0.09 * (H(p - 685) * H(885 - p))))"/>
+                        <inhomogeneousValue inhomogeneousParameter="PathLengthOverApicDends" value="1E8 * 0.0187 * 1E-4 * (0.01 + (0.99 * (H(p - 685) * H(885 - p))))"/>
                     </variableParameter>
                 </channelDensityNonUniformNernst>
                 <channelDensityNonUniformNernst id="Ca_HVA_apic" ionChannel="Ca_HVA" ion="ca">
                     <variableParameter parameter="condDensity" segmentGroup="apical_dendrite_group">
-                        <inhomogeneousValue inhomogeneousParameter="PathLengthOverApicDends" value="1.0E9 * 1.0E-8 * 0.000555 * (0.1 + (0.9 * (H(p - 685) * H(885 - p))))"/>
+                        <inhomogeneousValue inhomogeneousParameter="PathLengthOverApicDends" value="1E8 * 0.000555 * 1E-4 * (0.1 + (0.9 * (H(p - 685) * H(885 - p))))"/>
                     </variableParameter>
                 </channelDensityNonUniformNernst>
                 <specificCapacitance value="1 uF_per_cm2"/>
