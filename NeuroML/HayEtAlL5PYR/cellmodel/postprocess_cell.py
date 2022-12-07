@@ -92,7 +92,9 @@ def postprocess_L5PC():
     cell.reorder_segment_groups()
 
     # include ca dynamics file
+    celldoc.add("IncludeType", href="channels/CaDynamics_E2_NML2.nml", validate=False)
     celldoc.add("IncludeType", href="channels/CaDynamics_E2_NML2__decay460__gamma5_01Emin4.nml", validate=False)
+    celldoc.add("IncludeType", href="channels/CaDynamics_E2_NML2__decay122__gamma5_09Emin4.nml", validate=False)
 
     # biophysics
     # all
@@ -146,7 +148,7 @@ def postprocess_L5PC():
                              erev="-85 mV",
                              group_id=sgid,
                              ion="k",
-                             ion_chan_def_file="channels/K_P.channel.nml")
+                             ion_chan_def_file="channels/K_Pst.channel.nml")
     cell.add_channel_density(nml_cell_doc=celldoc,
                              cd_id="Ih_somatic",
                              ion_channel="Ih",
@@ -263,6 +265,98 @@ def postprocess_L5PC():
                                     initial_ext_concentration="2.0E-6 mol_per_cm3",
                                     segment_groups=sgid)
     # TODO: distribute CaHVA, CaLVA, Ih
+    # Add parameter that we use to distribute Ih
+    sg.add(
+        "InhomogeneousParameter",
+        id="PathLengthOverApicDends",
+        variable="p",
+        metric="Path Length from root",
+        proximal=sg.component_factory(
+            "ProximalDetails",
+            translation_start="0")
+    )
+    # distribute Ih
+    cdnonuniform_Ih = cell.add_channel_density_v(
+        "ChannelDensityNonUniform",
+        nml_cell_doc=celldoc,
+        id="Ih_apical",
+        ion_channel="Ih",
+        ion="hcn",
+        erev="-45 mV",
+        validate=False
+    )
+    varparam_Ih = cdnonuniform_Ih.add(
+        "VariableParameter",
+        parameter="condDensity",
+        segment_groups=sg.id,
+        validate=False
+    )
+    # TODO: clarify unit conversions
+    # 1300.5335 is the value of getLongestBranch("apic")
+    # run test_L5PC_loader.hoc, and then run:
+    # > access newcell.apic
+    # > newcell.soma distance()
+    # > newcell.getLongestBranch("apic")
+    varparam_Ih.add(
+        "InhomogeneousValue",
+        inhomogeneous_parameters="PathLengthOverApicDends",
+        value="1E9 * (0.2 * 1E-8) * ((2.087 * exp( 3.6161 * (p/1300.5335))) - 0.8696)"
+    )
+
+    cdnonuniform_ca_lva = cell.add_channel_density_v(
+        "ChannelDensityNonUniformNernst",
+        nml_cell_doc=celldoc,
+        id="Ca_LVA_apic",
+        ion_channel="Ca_LVAst",
+        ion="ca",
+        validate=False
+    )
+    varparam_ca_lva = cdnonuniform_ca_lva.add(
+        "VariableParameter",
+        parameter="condDensity",
+        segment_groups=sg.id,
+        validate=False
+    )
+    # TODO: clarify unit conversions
+    # 1300.5335 is the value of getLongestBranch("apic")
+    # run test_L5PC_loader.hoc, and then run:
+    # > access newcell.apic
+    # > newcell.soma distance()
+    # > newcell.getLongestBranch("apic")
+    # The conditional is implemented using a heaviside function:
+    # https://github.com/NeuroML/org.neuroml.export/blob/master/src/main/java/org/neuroml/export/neuron/NRNUtils.java#L174
+    # if both values in H are true, 0.09 is added to 0.01 = 1
+    # otherwise, 0.01
+    varparam_ca_lva.add(
+        "InhomogeneousValue",
+        inhomogeneous_parameters="PathLengthOverApicDends",
+        value="1.0E9 * 1.0E-8 * 0.0187 * (0.01 + (0.09 * (H(p - 685) * H(885 - p))))"
+    )
+
+    cdnonuniform_ca_hva = cell.add_channel_density_v(
+        "ChannelDensityNonUniformNernst",
+        nml_cell_doc=celldoc,
+        id="Ca_HVA_apic",
+        ion_channel="Ca_HVA",
+        ion="ca",
+        validate=False
+    )
+    varparam_ca_hva = cdnonuniform_ca_hva.add(
+        "VariableParameter",
+        parameter="condDensity",
+        segment_groups=sg.id,
+        validate=False
+    )
+    # TODO: clarify unit conversions
+    # The conditional is implemented using a heaviside function:
+    # https://github.com/NeuroML/org.neuroml.export/blob/master/src/main/java/org/neuroml/export/neuron/NRNUtils.java#L174
+    # if both values in H are true, 0.9 is added to 0.1 = 1
+    # otherwise, 0.1
+    varparam_ca_hva.add(
+        "InhomogeneousValue",
+        inhomogeneous_parameters="PathLengthOverApicDends",
+        value="1.0E9 * 1.0E-8 * 0.000555 * (0.1 + (0.9 * (H(p - 685) * H(885 - p))))"
+    )
 
     # basal
     cell.set_specific_capacitance("2 uF_per_cm2",
@@ -304,5 +398,48 @@ def postprocess_L5PC():
     write_neuroml2_file(celldoc, f"{cellname}.cell.nml")
 
 
+def analyse_L5PC(hyperpolarising: bool = True, depolarising: bool = True):
+    """Generate various curves for L5PC cells
+
+    :returns: None
+
+    """
+    cellname = "L5PC"
+    if hyperpolarising:
+        # hyper-polarising inputs
+        generate_current_vs_frequency_curve(
+            nml2_file=f"{cellname}.cell.nml",
+            cell_id=cellname,
+            custom_amps_nA=list(numpy.arange(-0.05, -0.1, -0.01)),
+            temperature="34 degC",
+            pre_zero_pulse=200,
+            post_zero_pulse=300,
+            plot_voltage_traces=True,
+            plot_iv=True,
+            plot_if=False,
+            simulator="jNeuroML_NEURON",
+            analysis_delay=300.,
+            analysis_duration=400.
+        )
+
+    if depolarising:
+        # depolarising inputs
+        generate_current_vs_frequency_curve(
+            nml2_file=f"{cellname}.cell.nml",
+            cell_id=cellname,
+            plot_voltage_traces=True,
+            spike_threshold_mV=-10.0,
+            custom_amps_nA=list(numpy.arange(0, 0.3, 0.05)),
+            temperature="34 degC",
+            pre_zero_pulse=200,
+            post_zero_pulse=300,
+            plot_iv=True,
+            simulator="jNeuroML_NEURON",
+            analysis_delay=50.,
+            analysis_duration=200.
+        )
+
+
 if __name__ == "__main__":
-    postprocess_L5PC()
+    # postprocess_L5PC()
+    analyse_L5PC(False, True)
