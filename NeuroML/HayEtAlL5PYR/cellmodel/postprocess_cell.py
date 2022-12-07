@@ -102,13 +102,21 @@ def postprocess_L5PC():
     cell.set_specific_capacitance("1 uF_per_cm2", group_id="all")
     cell.set_init_memb_potential("-80mV")
 
+    cell.add_channel_density(nml_cell_doc=celldoc,
+                             cd_id="pas_all",
+                             ion_channel="pas",
+                             cond_density="0.0000 S_per_cm2",
+                             erev="-90 mV",
+                             group_id="all",
+                             ion="non_specific",
+                             ion_chan_def_file="channels/pas.channel.nml")
     # somatic
     soma_group = cell.get_segment_group("soma_group")
     sgid = soma_group.id
     print(f"Adding channels to {sgid}")
     # passive
     cell.add_channel_density(nml_cell_doc=celldoc,
-                             cd_id="pas",
+                             cd_id="pas_somatic",
                              ion_channel="pas",
                              cond_density="0.0000338 S_per_cm2",
                              erev="-90 mV",
@@ -120,7 +128,7 @@ def postprocess_L5PC():
     cell.add_channel_density(nml_cell_doc=celldoc,
                              cd_id="SK_E2_somatic",
                              ion_channel="SK_E2",
-                             cond_density="0.441 S_per_cm2",
+                             cond_density="0.0441 S_per_cm2",
                              erev="-85 mV",
                              group_id=sgid,
                              ion="k",
@@ -212,7 +220,7 @@ def postprocess_L5PC():
                                   group_id=sgid)
     # passive
     cell.add_channel_density(nml_cell_doc=celldoc,
-                             cd_id="pas",
+                             cd_id="pas_apical",
                              ion_channel="pas",
                              cond_density="0.0000589 S_per_cm2",
                              erev="-90 mV",
@@ -300,7 +308,7 @@ def postprocess_L5PC():
     varparam_Ih.add(
         "InhomogeneousValue",
         inhomogeneous_parameters="PathLengthOverApicDends",
-        value="1E9 * (0.2 * 1E-8) * ((2.087 * exp( 3.6161 * (p/1300.5335))) - 0.8696)"
+        value="1E8 * (0.2 * 1E-8) * ((2.087 * exp( 3.6161 * (p/1300.5335))) - 0.8696)"
     )
 
     cdnonuniform_ca_lva = cell.add_channel_density_v(
@@ -330,7 +338,7 @@ def postprocess_L5PC():
     varparam_ca_lva.add(
         "InhomogeneousValue",
         inhomogeneous_parameters="PathLengthOverApicDends",
-        value="1.0E9 * 1.0E-8 * 0.0187 * (0.01 + (0.09 * (H(p - 685) * H(885 - p))))"
+        value="1E8 * 0.0187 * 1E-4 * (0.01 + (0.99 * (H(p - 685) * H(885 - p))))"
     )
 
     cdnonuniform_ca_hva = cell.add_channel_density_v(
@@ -355,15 +363,17 @@ def postprocess_L5PC():
     varparam_ca_hva.add(
         "InhomogeneousValue",
         inhomogeneous_parameters="PathLengthOverApicDends",
-        value="1.0E9 * 1.0E-8 * 0.000555 * (0.1 + (0.9 * (H(p - 685) * H(885 - p))))"
+        value="1E8 * 0.000555 * 1E-4 * (0.1 + (0.9 * (H(p - 685) * H(885 - p))))"
     )
 
     # basal
+    sg = cell.get_segment_group("basal_dendrite_group")
+    sgid = sg.id
     cell.set_specific_capacitance("2 uF_per_cm2",
-                                  group_id="basal_dendrite_group")
+                                  group_id=sgid)
     # passive
     cell.add_channel_density(nml_cell_doc=celldoc,
-                             cd_id="pas",
+                             cd_id="pas_basal",
                              ion_channel="pas",
                              cond_density="0.0000467 S_per_cm2",
                              erev="-90 mV",
@@ -386,7 +396,7 @@ def postprocess_L5PC():
     print(f"Adding channels to {sgid}")
     # passive
     cell.add_channel_density(nml_cell_doc=celldoc,
-                             cd_id="pas",
+                             cd_id="pas_axonal",
                              ion_channel="pas",
                              cond_density="0.0000325 S_per_cm2",
                              erev="-90 mV",
@@ -429,17 +439,18 @@ def analyse_L5PC(hyperpolarising: bool = True, depolarising: bool = True):
             cell_id=cellname,
             plot_voltage_traces=True,
             spike_threshold_mV=-10.0,
-            custom_amps_nA=list(numpy.arange(0, 0.3, 0.05)),
+            custom_amps_nA=list(numpy.arange(0.35, 0.51, 0.025)),
             temperature="34 degC",
             pre_zero_pulse=200,
             post_zero_pulse=300,
             plot_iv=True,
             simulator="jNeuroML_NEURON",
             analysis_delay=50.,
-            analysis_duration=200.
+            analysis_duration=200.,
+            num_processors=8
         )
 
 
 if __name__ == "__main__":
-    # postprocess_L5PC()
+    postprocess_L5PC()
     analyse_L5PC(False, True)
