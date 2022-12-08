@@ -36,10 +36,10 @@ def main(acell):
     objref newcell
 
     strdef morphology_file
-    morphology_file = "../../NEURON/modulhcn_hay/morphologies/cell1.asc"
+    morphology_file = "../../../NEURON/modulhcn_hay/morphologies/cell1.asc"
 
-    load_file("../../NEURON/modulhcn_hay/models/L5PCbiophys3.hoc")
-    load_file("../../NEURON/modulhcn_hay/models/L5PCtemplate.hoc")
+    load_file("../../../NEURON/modulhcn_hay/models/L5PCbiophys3.hoc")
+    load_file("../../../NEURON/modulhcn_hay/models/L5PCtemplate.hoc")
     newcell = new L5PCtemplate(morphology_file)
 
     define_shape()
