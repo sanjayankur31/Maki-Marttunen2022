@@ -299,16 +299,17 @@ def postprocess_L5PC():
         segment_groups=sg.id,
         validate=False
     )
-    # TODO: clarify unit conversions
     # 1300.5335 is the value of getLongestBranch("apic")
     # run test_L5PC_loader.hoc, and then run:
     # > access newcell.apic
     # > newcell.soma distance()
     # > newcell.getLongestBranch("apic")
+    #
+    # 0.0002 S/cm2 is 2 S/m2
     varparam_Ih.add(
         "InhomogeneousValue",
         inhomogeneous_parameters="PathLengthOverApicDends",
-        value="1E8 * (0.2 * 1E-8) * ((2.087 * exp( 3.6161 * (p/1300.5335))) - 0.8696)"
+        value="2 * ((2.087 * exp( 3.6161 * (p/1300.5335))) - 0.8696)"
     )
 
     cdnonuniform_ca_lva = cell.add_channel_density_v(
@@ -325,7 +326,6 @@ def postprocess_L5PC():
         segment_groups=sg.id,
         validate=False
     )
-    # TODO: clarify unit conversions
     # 1300.5335 is the value of getLongestBranch("apic")
     # run test_L5PC_loader.hoc, and then run:
     # > access newcell.apic
@@ -355,7 +355,6 @@ def postprocess_L5PC():
         segment_groups=sg.id,
         validate=False
     )
-    # TODO: clarify unit conversions
     # The conditional is implemented using a heaviside function:
     # https://github.com/NeuroML/org.neuroml.export/blob/master/src/main/java/org/neuroml/export/neuron/NRNUtils.java#L174
     # if both values in H are true, 0.9 is added to 0.1 = 1
