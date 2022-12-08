@@ -325,11 +325,6 @@ def postprocess_L5PC():
         segment_groups=sg.id,
         validate=False
     )
-    # 1300.5335 is the value of getLongestBranch("apic")
-    # run test_L5PC_loader.hoc, and then run:
-    # > access newcell.apic
-    # > newcell.soma distance()
-    # > newcell.getLongestBranch("apic")
     # The conditional is implemented using a heaviside function:
     # https://github.com/NeuroML/org.neuroml.export/blob/master/src/main/java/org/neuroml/export/neuron/NRNUtils.java#L174
     # if both values in H are true, 0.09 is added to 0.01 = 1
