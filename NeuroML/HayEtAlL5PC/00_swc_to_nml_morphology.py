@@ -36,10 +36,10 @@ def main(acell):
     objref newcell
 
     strdef morphology_file
-    morphology_file = "../../../NEURON/modulhcn_hay/morphologies/cell1.asc"
+    morphology_file = "../../NEURON/modulhcn_hay/morphologies/cell1.asc"
 
-    load_file("../../../NEURON/modulhcn_hay/models/L5PCbiophys3.hoc")
-    load_file("../../../NEURON/modulhcn_hay/models/L5PCtemplate.hoc")
+    load_file("../../NEURON/modulhcn_hay/models/L5PCbiophys3.hoc")
+    load_file("../../NEURON/modulhcn_hay/models/L5PCtemplate.hoc")
     newcell = new L5PCtemplate(morphology_file)
 
     define_shape()
@@ -69,5 +69,5 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("This script only accepts one argument.")
         sys.exit(1)
-    # main(sys.argv[1])
+    main(sys.argv[1])
     plot_morph(sys.argv[1])
