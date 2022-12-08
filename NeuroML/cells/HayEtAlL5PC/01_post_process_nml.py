@@ -272,7 +272,6 @@ def postprocess_L5PC():
                                     initial_concentration="5.0E-11 mol_per_cm3",
                                     initial_ext_concentration="2.0E-6 mol_per_cm3",
                                     segment_groups=sgid)
-    # TODO: distribute CaHVA, CaLVA, Ih
     # Add parameter that we use to distribute Ih
     sg.add(
         "InhomogeneousParameter",
