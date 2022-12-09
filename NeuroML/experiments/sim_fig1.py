@@ -153,8 +153,9 @@ def simulate_model(model_file_name: str, cellname: str, plot: bool = True):
 
 
 if __name__ == "__main__":
+    """
     # 2 is "normal"
-    for g in [0, 2, 4]:
+    for g in [0.0, 2.0, 4.0]:
         model_file_name = create_model(
             cellname="L5PC",
             celldir="../cells/HayEtAlL5PC/",
@@ -174,6 +175,34 @@ if __name__ == "__main__":
             plot_if=True,
             save_if_figure_to=f"{model_file_name}_iv.png",
             save_if_data_to=f"{model_file_name}_iv.dat",
+            show_plot_already=False,
+            num_processors=8,
+        )
+    """
+
+    # Normal: 5.135E-01 S/m2
+    for g in [0., 5.135E-01, 2 * 5.135E-01]:
+        model_file_name = create_model(
+            cellname="HL5PC",
+            celldir="../cells/SkinnerLabHL5PC/",
+            current_nA=".100 nA",
+            gIh_S_per_m2=f"{g} S_per_m2",
+        )
+        simulate_model(model_file_name, "HL5PC")
+
+        generate_current_vs_frequency_curve(
+            nml2_file=model_file_name,
+            cell_id="HL5PC",
+            custom_amps_nA=list(np.arange(0, 150E-3, 25E-3)),
+            analysis_duration=2000,
+            analysis_delay=200,
+            temperature="34 degC",
+            simulator="jNeuroML_NEURON",
+            plot_if=True,
+            plot_iv=True,
+            save_iv_figure_to=f"{model_file_name}_iv.png",
+            save_if_figure_to=f"{model_file_name}_if.png",
+            save_if_data_to=f"{model_file_name}_if.dat",
             show_plot_already=False,
             num_processors=8,
         )
