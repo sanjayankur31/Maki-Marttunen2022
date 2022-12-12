@@ -22,6 +22,11 @@ from pyneuroml.lems import LEMSSimulation
 from pyneuroml.plot import generate_plot
 
 
+def get_timestamp():
+    """Get current time stamp"""
+    return datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+
+
 def create_model(
     cellname: str, celldir: str, current_nA: str = "0.5nA", gIh_S_per_m2: str = None
 ) -> str:
@@ -32,7 +37,7 @@ def create_model(
     :returns: network model file
 
     """
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    timestamp = get_timestamp()
     nml_doc_name = f"net_{timestamp}_{cellname}_{gIh_S_per_m2}_{current_nA}".replace(
         ".", "_"
     ).replace(" ", "_")
@@ -163,3 +168,7 @@ def delete_neuron_special_dir():
         shutil.rmtree("x86_64")
     except FileNotFoundError:
         pass
+
+
+def plot(simlist):
+    """Plot required graphs"""
