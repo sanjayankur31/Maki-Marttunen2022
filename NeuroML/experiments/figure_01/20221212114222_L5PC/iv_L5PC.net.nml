@@ -1,0 +1,70 @@
+<neuroml xmlns="http://www.neuroml.org/schema/neuroml2"  xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.neuroml.org/schema/neuroml2 https://raw.github.com/NeuroML/NeuroML2/development/Schemas/NeuroML2/NeuroML_v2.3.xsd" id="network_of_L5PC">
+    <include href="net_20221212120520_L5PC_4_0_S_per_m2_0_5_nA.net.nml"/>
+    <pulseGenerator id="input_0_0nA" delay="300ms" duration="2200ms" amplitude="0.0nA"/>
+    <pulseGenerator id="input_0_1nA" delay="300ms" duration="2200ms" amplitude="0.1nA"/>
+    <pulseGenerator id="input_0_2nA" delay="300ms" duration="2200ms" amplitude="0.2nA"/>
+    <pulseGenerator id="input_0_30000000000000004nA" delay="300ms" duration="2200ms" amplitude="0.30000000000000004nA"/>
+    <pulseGenerator id="input_0_4nA" delay="300ms" duration="2200ms" amplitude="0.4nA"/>
+    <pulseGenerator id="input_0_5nA" delay="300ms" duration="2200ms" amplitude="0.5nA"/>
+    <pulseGenerator id="input_0_6000000000000001nA" delay="300ms" duration="2200ms" amplitude="0.6000000000000001nA"/>
+    <pulseGenerator id="input_0_7000000000000001nA" delay="300ms" duration="2200ms" amplitude="0.7000000000000001nA"/>
+    <pulseGenerator id="input_0_8nA" delay="300ms" duration="2200ms" amplitude="0.8nA"/>
+    <pulseGenerator id="input_0_9nA" delay="300ms" duration="2200ms" amplitude="0.9nA"/>
+    <pulseGenerator id="input_1_0nA" delay="300ms" duration="2200ms" amplitude="1.0nA"/>
+    <pulseGenerator id="input_1_1nA" delay="300ms" duration="2200ms" amplitude="1.1nA"/>
+    <pulseGenerator id="input_1_2000000000000002nA" delay="300ms" duration="2200ms" amplitude="1.2000000000000002nA"/>
+    <pulseGenerator id="input_1_3nA" delay="300ms" duration="2200ms" amplitude="1.3nA"/>
+    <pulseGenerator id="input_1_4000000000000001nA" delay="300ms" duration="2200ms" amplitude="1.4000000000000001nA"/>
+    <pulseGenerator id="input_1_5nA" delay="300ms" duration="2200ms" amplitude="1.5nA"/>
+    <network id="network_of_L5PC" type="networkWithTemperature" temperature="34 degC">
+        <population id="population_of_L5PC" component="L5PC" size="16"/>
+        <inputList id="input_0_0nA" population="population_of_L5PC" component="input_0_0nA">
+            <input id="0" target="../population_of_L5PC[0]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_0_1nA" population="population_of_L5PC" component="input_0_1nA">
+            <input id="0" target="../population_of_L5PC[1]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_0_2nA" population="population_of_L5PC" component="input_0_2nA">
+            <input id="0" target="../population_of_L5PC[2]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_0_30000000000000004nA" population="population_of_L5PC" component="input_0_30000000000000004nA">
+            <input id="0" target="../population_of_L5PC[3]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_0_4nA" population="population_of_L5PC" component="input_0_4nA">
+            <input id="0" target="../population_of_L5PC[4]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_0_5nA" population="population_of_L5PC" component="input_0_5nA">
+            <input id="0" target="../population_of_L5PC[5]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_0_6000000000000001nA" population="population_of_L5PC" component="input_0_6000000000000001nA">
+            <input id="0" target="../population_of_L5PC[6]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_0_7000000000000001nA" population="population_of_L5PC" component="input_0_7000000000000001nA">
+            <input id="0" target="../population_of_L5PC[7]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_0_8nA" population="population_of_L5PC" component="input_0_8nA">
+            <input id="0" target="../population_of_L5PC[8]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_0_9nA" population="population_of_L5PC" component="input_0_9nA">
+            <input id="0" target="../population_of_L5PC[9]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_1_0nA" population="population_of_L5PC" component="input_1_0nA">
+            <input id="0" target="../population_of_L5PC[10]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_1_1nA" population="population_of_L5PC" component="input_1_1nA">
+            <input id="0" target="../population_of_L5PC[11]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_1_2000000000000002nA" population="population_of_L5PC" component="input_1_2000000000000002nA">
+            <input id="0" target="../population_of_L5PC[12]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_1_3nA" population="population_of_L5PC" component="input_1_3nA">
+            <input id="0" target="../population_of_L5PC[13]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_1_4000000000000001nA" population="population_of_L5PC" component="input_1_4000000000000001nA">
+            <input id="0" target="../population_of_L5PC[14]" destination="synapses"/>
+        </inputList>
+        <inputList id="input_1_5nA" population="population_of_L5PC" component="input_1_5nA">
+            <input id="0" target="../population_of_L5PC[15]" destination="synapses"/>
+        </inputList>
+    </network>
+</neuroml>

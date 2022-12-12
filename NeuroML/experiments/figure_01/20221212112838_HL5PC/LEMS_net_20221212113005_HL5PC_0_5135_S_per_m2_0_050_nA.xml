@@ -1,0 +1,40 @@
+<Lems>
+    
+    <!-- 
+
+        This LEMS file has been automatically generated using PyNeuroML v0.7.6 (libNeuroML v0.4.2)
+
+     -->
+    
+    <!-- Specify which component to run -->
+    <Target component="net_20221212113005_HL5PC_0_5135_S_per_m2_0_050_nA"/>
+
+    <!-- Include core NeuroML2 ComponentType definitions -->
+    <Include file="Cells.xml"/>
+    <Include file="Networks.xml"/>
+    <Include file="Simulation.xml"/>
+    
+    <Include file="net_20221212113005_HL5PC_0_5135_S_per_m2_0_050_nA.net.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/CaDynamics_E2_NML2.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/CaDynamics_E2_NML2__decay460__gamma5_01Emin4.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/pas.channel.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/SK_E2.channel.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/SKv3_1.channel.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/K_Tst.channel.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/K_Pst.channel.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/Ih.channel.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/NaTa_t.channel.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/Nap_Et2.channel.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/Ca_HVA.channel.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/Ca_LVAst.channel.nml"/>
+    <Include file="../../../cells/SkinnerLabHL5PC//channels/Im.channel.nml"/>
+   
+    <Simulation id="net_20221212113005_HL5PC_0_5135_S_per_m2_0_050_nA" length="500ms" step="0.1ms" target="HL5PC_net" seed="123">  <!-- Note seed: ensures same random numbers used every run -->
+        
+        <OutputFile id="output0" fileName="net_20221212113005_HL5PC_0_5135_S_per_m2_0_050_nA.v.dat">
+            <OutputColumn id="HL5PC_pop" quantity="HL5PC_pop[0]/v"/> 
+        </OutputFile>
+        
+    </Simulation>
+
+</Lems>
