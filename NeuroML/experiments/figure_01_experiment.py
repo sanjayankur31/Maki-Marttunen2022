@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
-Simulations to generate figure 1
+Methods used for experiments in Figure 1
+These are used by the individual scripts, they are not run using this file.
 
-File: sim_fig1.py
+File: NeuroML/experiments/figure_01_experiment.py
 
 Copyright 2022 Ankur Sinha
 Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 """
 
-
 import datetime
+import shutil
 import numpy as np
 
 import neuroml
@@ -19,7 +20,6 @@ from pyneuroml.pynml import write_neuroml2_file
 from pyneuroml import pynml
 from pyneuroml.lems import LEMSSimulation
 from pyneuroml.plot import generate_plot
-from pyneuroml.analysis import generate_current_vs_frequency_curve
 
 
 def create_model(
@@ -105,7 +105,8 @@ def create_model(
     return nml_doc_name
 
 
-def simulate_model(model_file_name: str, cellname: str, plot: bool = True):
+def simulate_model(model_file_name: str, cellname: str, plot: bool = True,
+                   skip_run=True):
     """Simulate the model, generating current plots if required.
 
     :param model_file_name: name of model file
@@ -116,6 +117,8 @@ def simulate_model(model_file_name: str, cellname: str, plot: bool = True):
     :type plot: bool
     :returns: None
     """
+    delete_neuron_special_dir()
+
     network_id = f"{cellname}_net"
     simulation_id = model_file_name.split(".")[0]
     simulation = LEMSSimulation(
@@ -138,8 +141,9 @@ def simulate_model(model_file_name: str, cellname: str, plot: bool = True):
         plot=False,
         verbose=True,
         compile_mods=True,
+        skip_run=skip_run
     )
-    if plot:
+    if not skip_run and plot:
         data_array = np.loadtxt("%s.v.dat" % simulation_id)
         generate_plot(
             [data_array[:, 0]],
@@ -152,57 +156,10 @@ def simulate_model(model_file_name: str, cellname: str, plot: bool = True):
         )
 
 
-if __name__ == "__main__":
+def delete_neuron_special_dir():
+    """Delete neuron special directory containing compiled mods
     """
-    # 2 is "normal"
-    for g in [0.0, 2.0, 4.0]:
-        model_file_name = create_model(
-            cellname="L5PC",
-            celldir="../cells/HayEtAlL5PC/",
-            current_nA="0.5 nA",
-            gIh_S_per_m2=f"{g} S_per_m2",
-        )
-        simulate_model(model_file_name, "L5PC")
-
-        generate_current_vs_frequency_curve(
-            nml2_file=model_file_name,
-            cell_id="L5PC",
-            custom_amps_nA=list(np.arange(0, 1.6, 0.1)),
-            analysis_duration=2000,
-            analysis_delay=200,
-            temperature="34 degC",
-            simulator="jNeuroML_NEURON",
-            plot_if=True,
-            save_if_figure_to=f"{model_file_name}_iv.png",
-            save_if_data_to=f"{model_file_name}_iv.dat",
-            show_plot_already=False,
-            num_processors=8,
-        )
-    """
-
-    # Normal: 5.135E-01 S/m2
-    for g in [0., 5.135E-01, 2 * 5.135E-01]:
-        model_file_name = create_model(
-            cellname="HL5PC",
-            celldir="../cells/SkinnerLabHL5PC/",
-            current_nA=".100 nA",
-            gIh_S_per_m2=f"{g} S_per_m2",
-        )
-        simulate_model(model_file_name, "HL5PC")
-
-        generate_current_vs_frequency_curve(
-            nml2_file=model_file_name,
-            cell_id="HL5PC",
-            custom_amps_nA=list(np.arange(0, 150E-3, 25E-3)),
-            analysis_duration=2000,
-            analysis_delay=200,
-            temperature="34 degC",
-            simulator="jNeuroML_NEURON",
-            plot_if=True,
-            plot_iv=True,
-            save_iv_figure_to=f"{model_file_name}_iv.png",
-            save_if_figure_to=f"{model_file_name}_if.png",
-            save_if_data_to=f"{model_file_name}_if.dat",
-            show_plot_already=False,
-            num_processors=8,
-        )
+    try:
+        shutil.rmtree("x86_64")
+    except FileNotFoundError:
+        pass
