@@ -1,0 +1,3 @@
+https://github.com/NeuralEnsemble/libNeuroML.git@development#egg=libNeuroML
+https://github.com/NeuroML/pyneuroml.git@development#egg=pyneuroml
+NEURON
