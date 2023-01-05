@@ -11,7 +11,11 @@ source /path/to/a/venv/folder/bin/activate
 pip install -r ./requirements.txt
 ```
 
+## Cells
+
+Standardised NeuroML implementations of various cell models are kept in this directory.
 
 ## Experiments
 
 The `experiments` folder contains individual experiments in different folders with their specific documentations.
+
