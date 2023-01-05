@@ -4,3 +4,7 @@ NEURON
 git+https://github.com/NeuralEnsemble/libNeuroML.git@development#egg=libNeuroML
 git+https://github.com/NeuroML/pyneuroml.git@development#egg=pyneuroml
 git+https://github.com/ModECI/modelspec.git@development#egg=modelspec
+git+https://github.com/NeuralEnsemble/pyelectro.git@development#egg=pyelectro
+git+https://github.com/NeuralEnsemble/neurotune.git@development#egg=neurotune
+git+https://github.com/aarongarrett/inspyred.git@master#egg=inspyred
+
