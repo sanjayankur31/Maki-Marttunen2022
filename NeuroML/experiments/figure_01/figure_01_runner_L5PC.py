@@ -14,7 +14,7 @@ import numpy as np
 from pyneuroml.analysis import generate_current_vs_frequency_curve
 
 from figure_01_experiment import (create_model, simulate_model,
-                                  delete_neuron_special_dir, plot,
+                                  delete_neuron_special_dir,
                                   get_timestamp)
 
 
@@ -32,12 +32,12 @@ def run():
     os.chdir(simdir)
 
     # 2 is "normal"
-    for g in [0.0, 2.0, 4.0]:
+    for g in [0.0, 1.0, 2.0]:
         model_file_name = create_model(
             cellname=cellname,
             celldir=celldir,
             current_nA="0.5 nA",
-            gIh_S_per_m2=f"{g} S_per_m2",
+            g_Ih_multiplier=f"{g}",
         )
         simlist.append(model_file_name)
         simulate_model(model_file_name, cellname)
@@ -73,4 +73,3 @@ def run():
 if __name__ == "__main__":
     simlist = run()
     print(simlist)
-    plot(simlist)
