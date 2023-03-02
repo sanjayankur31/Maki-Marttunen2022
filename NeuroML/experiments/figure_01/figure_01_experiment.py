@@ -28,19 +28,26 @@ def get_timestamp():
 
 
 def create_model(
-    cellname: str, celldir: str, current_nA: str = "0.5nA", gIh_S_per_m2: str = None
+    cellname: str, celldir: str, current_nA: str = "0.5nA", g_Ih_multiplier: str =
+    None, g_Ca_LVAst_multiplier: str = None
 ) -> str:
     """Create model with different values of conductance for the Ih channel.
 
     :param cellname: TODO
-    :param gIh_S_per_m2: conductance for Ih channels in gIh_S_per_m2
+    :param g_Ih_multiplier: multiplier for Ih channels
+    :param g_Ca_LVAst_multiplier: multiplier for Ca_LVAst
     :returns: network model file
 
     """
     timestamp = get_timestamp()
-    nml_doc_name = f"net_{timestamp}_{cellname}_{gIh_S_per_m2}_{current_nA}".replace(
-        ".", "_"
-    ).replace(" ", "_")
+    nml_doc_name = f"net_{timestamp}_{cellname}"
+    if g_Ih_multiplier is not None:
+        nml_doc_name += f"_{g_Ih_multiplier}"
+    if g_Ca_LVAst_multiplier is not None:
+        nml_doc_name += f"_{g_Ca_LVAst_multiplier}"
+    nml_doc_name += f"_{current_nA}"
+
+    nml_doc_name = nml_doc_name.replace(".", "_").replace(" ", "_")
     nml_doc = component_factory(neuroml.NeuroMLDocument, id=nml_doc_name)
 
     cell_doc = read_neuroml2_file(f"{celldir}/{cellname}.cell.nml")
@@ -51,7 +58,9 @@ def create_model(
     nml_doc.add(cell)
 
     # modify Ih conductance
-    if gIh_S_per_m2 is not None:
+    if g_Ih_multiplier is not None:
+        print(f"Ih multiplier: {g_Ih_multiplier}")
+        value_exp = ""
         ih_somatic = None  # type: neuroml.ChannelDensity
         ih_basal = None  # type: neuroml.ChannelDensity
         ih_apical = None  # type: neuroml.ChannelDensityNonUniform
@@ -68,17 +77,63 @@ def create_model(
             elif cd.id == "Ih_apical":
                 ih_apical = cd
 
-        ih_somatic.cond_density = gIh_S_per_m2
-        ih_basal.cond_density = gIh_S_per_m2
+        cond_den, unit = pynml.split_nml2_quantity(ih_somatic.cond_density)
+        new_cond_den = float(g_Ih_multiplier) * float(cond_den)
+        print(f"Ih somatic: {ih_somatic.cond_density} -> {new_cond_den}")
+        ih_somatic.cond_density = f"{new_cond_den} {unit}"
+        cond_den, unit = pynml.split_nml2_quantity(ih_basal.cond_density)
+        new_cond_den = float(g_Ih_multiplier) * float(cond_den)
+        print(f"Ih basal: {ih_basal.cond_density} -> {new_cond_den}")
+        ih_basal.cond_density = f"{new_cond_den} {unit}"
 
         # ih_apical is a non homogenous param, so needs a little more tinkering
         # the expression is of the form: gbat * <exp etc dependent on distance>
         value_exp = ih_apical.variable_parameters[
             0
         ].inhomogeneous_value.value  # type: str
-        [gbar, expression] = value_exp.split("*", maxsplit=1)
-        new_value_exp = f"{gIh_S_per_m2.replace('S_per_m2', '')} * {expression}"
+        # here we can just include the new multiplier in the expression
+        new_value_exp = f"{g_Ih_multiplier} * {value_exp}"
+        print(f"Ih apical: {ih_apical.variable_parameters[0].inhomogeneous_value.value} -> {new_value_exp}")
         ih_apical.variable_parameters[0].inhomogeneous_value.value = new_value_exp
+
+    # Not present in basal dendrites
+    if g_Ca_LVAst_multiplier is not None:
+        print(f"Ca_LVAst multiplier: {g_Ca_LVAst_multiplier}")
+        value_exp = ""
+        Ca_LVAst_somatic = None  # type: neuroml.ChannelDensity
+        Ca_LVAst_apical = None  # type: neuroml.ChannelDensity
+
+        # get Ca_LVAst channel densities
+        for cd in (
+            cell.biophysical_properties.membrane_properties.channel_density_nernsts
+            + cell.biophysical_properties.membrane_properties.channel_density_non_uniform_nernsts
+            +
+            cell.biophysical_properties.membrane_properties.channel_density_non_uniforms
+        ):
+            print(f"Looking at {cd.id}")
+            if cd.ion_channel == "Ca_LVAst":
+                if "somatic" in cd.id:
+                    Ca_LVAst_somatic = cd
+                elif "apic" in cd.id:
+                    Ca_LVAst_apical = cd
+
+        assert (Ca_LVAst_somatic is not None)
+        assert (Ca_LVAst_apical is not None)
+
+        cond_den, unit = pynml.split_nml2_quantity(Ca_LVAst_somatic.cond_density)
+        new_cond_den = float(g_Ca_LVAst_multiplier) * float(cond_den)
+        print(f"Ca_LVAst somatic: {Ca_LVAst_somatic.cond_density} -> {new_cond_den}")
+        Ca_LVAst_somatic.cond_density = f"{new_cond_den} {unit}"
+
+        # Ca_LVAst_apical is a non homogenous param, so needs a little more tinkering
+        # the expression is of the form: mul1 * gbar * mul2 * <exp etc dependent on distance>
+        value_exp = Ca_LVAst_apical.variable_parameters[
+            0
+        ].inhomogeneous_value.value  # type: str
+        # here we can directly include the multiplier in the expression
+        new_value_exp = f"{g_Ca_LVAst_multiplier} * {value_exp}"
+        print(f"Ca_LVAst apical: {Ca_LVAst_apical.variable_parameters[0].inhomogeneous_value.value} -> {new_value_exp}")
+        Ca_LVAst_apical.variable_parameters[0].inhomogeneous_value.value = new_value_exp
 
     # include channel file definitions
     for inc in cell_doc.includes:
@@ -168,7 +223,3 @@ def delete_neuron_special_dir():
         shutil.rmtree("x86_64")
     except FileNotFoundError:
         pass
-
-
-def plot(simlist):
-    """Plot required graphs"""
