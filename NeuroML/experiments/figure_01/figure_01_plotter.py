@@ -45,7 +45,7 @@ def plot_if(simfolder: str) -> None:
     labels = []
     for afile in datafiles:
         # can be improved
-        label = "_".join(re.sub(r"_(\d+)_(\d+)_", r" \1.\2 ", (re.sub(r"_m2.*", "_m2", afile.name.split(".")[0]))).split("_")[2:])
+        label = "_".join(re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 ", (re.sub(r"_m2.*", "_m2", afile.name.split(".")[0]))).split("_")[2:])
         labels.append(label)
         data = (numpy.loadtxt(afile))
         # convert nA to pA
@@ -54,7 +54,7 @@ def plot_if(simfolder: str) -> None:
 
     generate_plot(xvalues,
                   yvalues,
-                  title="F-I curve for different Ih conductances",
+                  title="F-I curve for different Ih/CaLVAst conductances",
                   xaxis="I(nA)", yaxis="f(spikes/s)",
                   show_plot_already=False, labels=labels)
     plt.show()
