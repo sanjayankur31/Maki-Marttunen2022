@@ -2,7 +2,7 @@
 """
 Simulations for figure 1 for the L5PC cell with ScZ variants.
 
-File: NeuroML/experiments/figure_01_runner_L5PC.py
+File: NeuroML/experiments/figure_01_runner_L5PC_ScZ.py
 
 Copyright 2022 Ankur Sinha
 Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
