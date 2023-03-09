@@ -27,36 +27,16 @@ def get_timestamp():
     return datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 
-def create_model(
-    cellname: str, celldir: str, current_nA: str = "0.5nA", g_Ih_multiplier: str =
-    None, g_Ca_LVAst_multiplier: str = None
-) -> str:
-    """Create model with different values of conductance for the Ih channel.
+def create_modified_cell(cell, g_Ih_multiplier, g_Ca_LVAst_multiplier):
+    """Modifies a cell object to multiply the Ih and Ca_LVAst maximal
+    conductances with given multipliers
 
-    :param cellname: TODO
+    :param cell: cell object to modify
     :param g_Ih_multiplier: multiplier for Ih channels
     :param g_Ca_LVAst_multiplier: multiplier for Ca_LVAst
-    :returns: network model file
+    :returns: None
 
     """
-    timestamp = get_timestamp()
-    nml_doc_name = f"net_{timestamp}_{cellname}"
-    if g_Ih_multiplier is not None:
-        nml_doc_name += f"_{g_Ih_multiplier}"
-    if g_Ca_LVAst_multiplier is not None:
-        nml_doc_name += f"_{g_Ca_LVAst_multiplier}"
-    nml_doc_name += f"_{current_nA}"
-
-    nml_doc_name = nml_doc_name.replace(".", "_").replace(" ", "_")
-    nml_doc = component_factory(neuroml.NeuroMLDocument, id=nml_doc_name)
-
-    cell_doc = read_neuroml2_file(f"{celldir}/{cellname}.cell.nml")
-    # we could even store the cell in a separate file and include that, but
-    # since we're only working with one file, we can include its NeuroML in our
-    # network file here
-    cell = cell_doc.cells[0]  # type: neuroml.Cell
-    nml_doc.add(cell)
-
     # modify Ih conductance
     if g_Ih_multiplier is not None:
         print(f"Ih multiplier: {g_Ih_multiplier}")
@@ -134,6 +114,39 @@ def create_model(
         new_value_exp = f"{g_Ca_LVAst_multiplier} * {value_exp}"
         print(f"Ca_LVAst apical: {Ca_LVAst_apical.variable_parameters[0].inhomogeneous_value.value} -> {new_value_exp}")
         Ca_LVAst_apical.variable_parameters[0].inhomogeneous_value.value = new_value_exp
+
+
+def create_model(
+    cellname: str, celldir: str, current_nA: str = "0.5nA", g_Ih_multiplier: str =
+    None, g_Ca_LVAst_multiplier: str = None
+) -> str:
+    """Create model with different values of conductance for the Ih channel.
+
+    :param cellname: TODO
+    :param g_Ih_multiplier: multiplier for Ih channels
+    :param g_Ca_LVAst_multiplier: multiplier for Ca_LVAst
+    :returns: network model file
+
+    """
+    timestamp = get_timestamp()
+    nml_doc_name = f"net_{timestamp}_{cellname}"
+    if g_Ih_multiplier is not None:
+        nml_doc_name += f"_{g_Ih_multiplier}"
+    if g_Ca_LVAst_multiplier is not None:
+        nml_doc_name += f"_{g_Ca_LVAst_multiplier}"
+    nml_doc_name += f"_{current_nA}"
+
+    nml_doc_name = nml_doc_name.replace(".", "_").replace(" ", "_")
+    nml_doc = component_factory(neuroml.NeuroMLDocument, id=nml_doc_name)
+
+    cell_doc = read_neuroml2_file(f"{celldir}/{cellname}.cell.nml")
+    # we could even store the cell in a separate file and include that, but
+    # since we're only working with one file, we can include its NeuroML in our
+    # network file here
+    cell = cell_doc.cells[0]  # type: neuroml.Cell
+    nml_doc.add(cell)
+
+    create_modified_cell(cell, g_Ih_multiplier, g_Ca_LVAst_multiplier)
 
     # include channel file definitions
     for inc in cell_doc.includes:
