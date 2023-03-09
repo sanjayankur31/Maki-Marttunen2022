@@ -31,8 +31,12 @@ def run():
     os.mkdir(simdir)
     os.chdir(simdir)
 
-    #  [0.537, 1.085]
-    for mul_Ca_LVAst, mul_Ih in [[0.537, 1.0], [1.0, 1.085]]:
+    # [1.1024124036546668, 1.128775065748801]
+    for mul_Ca_LVAst, mul_Ih in [
+            [1.1024124036546668, 1.0],
+            [1.0, 1.128775065748801],
+            [1.1024124036546668, 1.128775065748801]
+    ]:
         model_file_name = create_model(
             cellname=cellname,
             celldir=celldir,
