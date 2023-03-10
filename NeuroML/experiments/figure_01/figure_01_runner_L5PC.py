@@ -68,6 +68,7 @@ def run():
         )
 
     os.chdir("../")
+    return simlist
 
 
 if __name__ == "__main__":
