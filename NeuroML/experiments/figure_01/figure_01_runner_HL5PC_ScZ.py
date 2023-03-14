@@ -28,7 +28,7 @@ def run():
     # run simulations in new directory so that they don't conflict with
     # existing files.
     currenttime = get_timestamp()
-    simdir = f"{currenttime}_{cellname}"
+    simdir = f"{currenttime}_{cellname}_ScZ"
     os.mkdir(simdir)
     os.chdir(simdir)
 
