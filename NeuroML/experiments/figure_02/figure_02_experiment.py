@@ -10,6 +10,7 @@ Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 """
 
 import numpy as np
+import json
 
 import neuroml
 from neuroml.utils import component_factory
@@ -77,14 +78,16 @@ def create_model(
 
     # an input at 500 from soma
     segments_at_500 = cell.get_segments_at_distance(500)
-    apical_segments_at_500 = {}
+    first_apical_segment_at_500 = None
+    fraction_along_segment_at_500 = None
     for seg, frac_along in segments_at_500.items():
+        # just take the first one
         if seg in apical_segments:
-            apical_segments_at_500[seg] = frac_along
+            first_apical_segment_at_500 = seg
+            fraction_along_segment_at_500 = frac_along
+            break
 
-    a_segment_at_500 = list(segments_at_500.keys())[0]
-    fraction_along_segment_at_500 = apical_segments_at_500[a_segment_at_500]
-
+    # get distances from soma to get segments at
     if distance_from_soma_inc > 0:
         extremeties = cell.get_extremeties()
 
@@ -97,7 +100,12 @@ def create_model(
         # drop first point, linspace is [start, stop]
         distances_for_inputs = distances_for_inputs[1:]
 
-    # create new population
+    # remove 500 if it's also in the distances
+    distances_for_inputs = distances_for_inputs[distances_for_inputs != 500]
+
+    # create new population: one cell each with an input at a different
+    # location, so we need to know the number of cells (number of points for
+    # inputs, calculated above)
     popsize = (1 + len(distances_for_inputs))
     print(f"Population size is {popsize}")
     population = network.add(
@@ -107,7 +115,7 @@ def create_model(
         size=popsize
     )
 
-    # add at 500, first
+    # input component
     pg = nml_doc.add(
         neuroml.PulseGenerator,
         id="pulseGen_%i" % 0,
@@ -115,29 +123,57 @@ def create_model(
         duration="0.2ms",
         amplitude=current_nA,
     )
-    network.add(
-        neuroml.ExplicitInput, target=f"{population.id}[0]/{a_segment_at_500}", input=pg.id
+
+    # input list
+    inputlist = network.add(
+        neuroml.InputList, id="i1", component=pg.id, populations=population.id,
+        validate=False
+    )
+
+    # add input at 500 first
+    input_id = 0
+    inputlist.add(
+        neuroml.Input, id=input_id, target=f"../{population.id}[0]/{cellname}",
+        segment_id=first_apical_segment_at_500,
+        fraction_along=fraction_along_segment_at_500,
+        destination="synapses"
     )
 
     # also use the same pulse generator to provide input to other cells at
     # different distances from soma
+    dist_vs_seg_dict = {}
+    dist_vs_seg_dict["500.0"] = first_apical_segment_at_500
+
     for p in range(1, popsize):
         s_at_d = cell.get_segments_at_distance(distances_for_inputs[p - 1])
-        apical_segments_at_d = {}
+        first_apical_segment_at_d = None
+        frac_along_at_d = None
         for seg, frac_along in s_at_d.items():
             if seg in apical_segments:
-                apical_segments_at_d[seg] = frac_along
+                first_apical_segment_at_d = seg
+                fraction_along_at_d = frac_along
+                break
 
-        a_segment_at_d = list(apical_segments_at_d.keys())[0]
-        if a_segment_at_d is None:
+        if first_apical_segment_at_d is None:
             print(f"No segment found at distance {distances_for_inputs[p - 1]}")
             continue
-        print(f"{distances_for_inputs[p - 1]}: {a_segment_at_d}")
-        print(cell.get_segment_location_info(a_segment_at_d))
 
-        network.add(
-            neuroml.ExplicitInput, target=f"{population.id}[{p}]/{a_segment_at_d}", input=pg.id
+        print(f"{distances_for_inputs[p - 1]}: {first_apical_segment_at_d}")
+        dist_vs_seg_dict[distances_for_inputs[p - 1]] = first_apical_segment_at_d
+
+        input_id += 1
+        inputlist.add(
+            neuroml.Input, id=input_id, target=f"../{population.id}[{p}]/{cellname}",
+            segment_id=first_apical_segment_at_d,
+            fraction_along=fraction_along_at_d,
+            destination="synapses"
         )
+
+    # write segments at different distances to a file, useful later when
+    # plotting and so on
+    # should be identical for all, since we're using only the one cell
+    with open(f"{nml_doc_name}.segs.json", 'w') as f:
+        f.write(json.dumps(dist_vs_seg_dict))
 
     nml_doc_name += ".net.nml"
     write_neuroml2_file(nml_doc, nml_doc_name)
@@ -145,9 +181,9 @@ def create_model(
     return nml_doc_name
 
 
-def simulate_model(model_file_name: str, cellname: str, num_cells: int = 1,
+def simulate_model(model_file_name: str, cellname: str,
                    plot: bool = True,
-                   skip_run=True, duration_ms=10):
+                   skip_run=True, duration_ms=10) -> str:
     """Simulate the model, generating current plots if required.
 
     :param model_file_name: name of model file
@@ -156,7 +192,8 @@ def simulate_model(model_file_name: str, cellname: str, num_cells: int = 1,
     :type cellname: str
     :param plot: toggle plotting
     :type plot: bool
-    :returns: None
+    :returns: name of LEMS simulation file
+    :rtype: str
     """
     delete_neuron_special_dir()
 
@@ -169,10 +206,15 @@ def simulate_model(model_file_name: str, cellname: str, num_cells: int = 1,
     simulation.include_neuroml2_file(model_file_name)
 
     simulation.create_output_file("output0", "%s.v.dat" % simulation_id)
-    for i in range(0, num_cells):
+
+    model = read_neuroml2_file(model_file_name)
+    inputlist = model.networks[0].input_lists[0].input
+    num_cells = 0
+    for aninput in inputlist:
         simulation.add_column_to_output_file(
-            "output0", f"{cellname}_pop", f"{cellname}_pop[{i}]/v"
+            "output0", f"{cellname}_pop_{aninput.segment_id}", f"{cellname}_pop[{num_cells}]/v"
         )
+        num_cells = num_cells + 1
 
     lems_simulation_file = simulation.save_to_file()
 
@@ -187,12 +229,26 @@ def simulate_model(model_file_name: str, cellname: str, num_cells: int = 1,
     )
     if not skip_run and plot:
         data_array = np.loadtxt("%s.v.dat" % simulation_id)
+        segs_data = {}
+        with open(f"{simulation_id}.segs.json", 'r') as f:
+            segs_data = json.load(f)
+
+        x_vals = [data_array[:, 0]] * num_cells
+        y_vals = []
+
+        for i in range(0, num_cells):
+            y_vals.append(data_array[:, i])
+
         generate_plot(
-            [data_array[:, 0]],
-            [data_array[:, 1]],
-            "Membrane potential",
+            xvalues=x_vals,
+            yvalues=y_vals,
+            labels=list(segs_data.keys()),
+            title="Membrane potential",
             show_plot_already=False,
             save_figure_to="%s-v.png" % simulation_id,
             xaxis="time (s)",
             yaxis="membrane potential (V)",
+            ylim=[-0.085, 0.065]
         )
+
+    return lems_simulation_file
