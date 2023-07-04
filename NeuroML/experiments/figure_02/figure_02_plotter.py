@@ -73,7 +73,7 @@ def plot(simfolder: str) -> None:
         for current in current_range:
             generate_plot(
                 xvalues=[simdata[0.0][current]['t']] * 2,
-                yvalues=[simdata[0.0][current][f'L5PC_pop[{i}]/v'], simdata[1.0][30][f'L5PC_pop[{i}]/v']],
+                yvalues=[simdata[0.0][current][f'{cellname}_pop[{i}]/v'], simdata[1.0][current][f'{cellname}_pop[{i}]/v']],
                 labels=["g*0", "g*1"],
                 title=f"Membrane potential ({current} nA at {dist})",
                 show_plot_already=False,
