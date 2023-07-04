@@ -25,13 +25,84 @@ from figure_01.figure_01_experiment import (create_modified_cell,
                                             get_timestamp)
 
 
+def get_segments_at_distances(celldir: str, cellname: str, segment_group: str,
+                              distance_from_soma_inc: float, extra_points =
+                              list[float]):
+    """Get dict of segments at different distances from the soma, and their
+    fraction along values
+
+    :param celldir: cell directory
+    :type celldir: str
+    :param cellname: cell name
+    :type cellname: str
+    :param segment_group: segment group to limit to
+    :type segment_group: str
+    :param distance_from_soma_inc: incremental value to find points at
+    :type distance_from_soma_inc: float
+    :param extra_points: extra points to include at starting of list
+    :type extra_points: list of floats
+    :returns: dict with key as distance, value as [segment id, fraction along]
+
+    """
+    cell_doc = read_neuroml2_file(f"{celldir}/{cellname}.cell.nml")
+    # we could even store the cell in a separate file and include that, but
+    # since we're only working with one file, we can include its NeuroML in our
+    # network file here
+    cell = cell_doc.cells[0]  # type: neuroml.Cell
+
+    apical_segments = cell.get_all_segments_in_group("apical_dendrite_group")
+    dist_vs_seg_dict = {}
+
+    # get distances from soma to get segments at
+    if distance_from_soma_inc > 0:
+        extremeties = cell.get_extremeties()
+
+        furthest_tip = max(list(extremeties.values()))
+        # create 25 points
+        distances_for_inputs = np.arange(
+            0, furthest_tip, distance_from_soma_inc,
+            dtype=float
+        ).round(3)
+        # drop first point, linspace is [start, stop]
+        distances_for_inputs = distances_for_inputs[1:]
+
+    distances = []
+    # complete list
+    distances.extend(extra_points)
+    distances.extend(distances_for_inputs)
+
+    for d in distances:
+        s_at_d = cell.get_segments_at_distance(d)
+        first_segment_at_d = None
+        fraction_along_at_d = None
+        for seg, frac_along in s_at_d.items():
+            if seg in apical_segments:
+                first_segment_at_d = seg
+                fraction_along_at_d = frac_along
+                break
+
+        if first_segment_at_d is None:
+            print(f"No segment found at distance {d}")
+            continue
+
+        print(f"{d}: {first_segment_at_d}, {fraction_along_at_d}")
+        dist_vs_seg_dict[d] = [first_segment_at_d, fraction_along_at_d]
+
+    # write segments at different distances to a file, useful later when
+    # plotting
+    with open(f"{cellname}.segs.json", 'w') as f:
+        f.write(json.dumps(dist_vs_seg_dict))
+
+    return dist_vs_seg_dict
+
+
 def create_model(
     cellname: str,
     celldir: str,
+    dist_vs_seg_dict: dict,
     current_nA: str = "0.5nA",
     g_Ih_multiplier: str = None,
     g_Ca_LVAst_multiplier: str = None,
-    distance_from_soma_inc: int = 0
 ) -> str:
     """Create model with different cells receiving inputs at different parts,
     for a particular set of Ih and CA_LVast maximal conductances.
@@ -41,9 +112,8 @@ def create_model(
     :param current_nA: current to apply in nA
     :param g_Ih_multiplier: multiplier for Ih channels
     :param g_Ca_LVAst_multiplier: multiplier for Ca_LVAst
-    :param distance_from_soma_inc: incremental distance from soma at which to
-        place inputs (inputs will be placed at N, 2N, 3N, and so on, use 0 to
-        disable)
+    :param dist_vs_seg_dict: dict with keys as distance from soma, and value as
+        segment id
     :returns: network model file
 
     """
@@ -74,39 +144,10 @@ def create_model(
 
     # create a population of N cells, each with an input at different location
     network = nml_doc.add(neuroml.Network, id=f"{cellname}_net", validate=False)
-    apical_segments = cell.get_all_segments_in_group("apical_dendrite_group")
-
-    # an input at 500 from soma
-    segments_at_500 = cell.get_segments_at_distance(500)
-    first_apical_segment_at_500 = None
-    fraction_along_segment_at_500 = None
-    for seg, frac_along in segments_at_500.items():
-        # just take the first one
-        if seg in apical_segments:
-            first_apical_segment_at_500 = seg
-            fraction_along_segment_at_500 = frac_along
-            break
-
-    # get distances from soma to get segments at
-    if distance_from_soma_inc > 0:
-        extremeties = cell.get_extremeties()
-
-        furthest_tip = max(list(extremeties.values()))
-        # create 25 points
-        distances_for_inputs = np.arange(
-            0, furthest_tip, distance_from_soma_inc,
-            dtype=float
-        ).round(3)
-        # drop first point, linspace is [start, stop]
-        distances_for_inputs = distances_for_inputs[1:]
-
-    # remove 500 if it's also in the distances
-    distances_for_inputs = distances_for_inputs[distances_for_inputs != 500]
-
     # create new population: one cell each with an input at a different
     # location, so we need to know the number of cells (number of points for
     # inputs, calculated above)
-    popsize = (1 + len(distances_for_inputs))
+    popsize = len(dist_vs_seg_dict.keys())
     print(f"Population size is {popsize}")
     population = network.add(
         neuroml.Population,
@@ -116,11 +157,12 @@ def create_model(
     )
 
     # input component
+    print(f"Current input is {current_nA}")
     pg = nml_doc.add(
         neuroml.PulseGenerator,
         id="pulseGen_%i" % 0,
-        delay="5ms",
-        duration="0.2ms",
+        delay="10ms",
+        duration="0.2ms",  # from code
         amplitude=current_nA,
     )
 
@@ -130,50 +172,16 @@ def create_model(
         validate=False
     )
 
-    # add input at 500 first
-    input_id = 0
-    inputlist.add(
-        neuroml.Input, id=input_id, target=f"../{population.id}[0]/{cellname}",
-        segment_id=first_apical_segment_at_500,
-        fraction_along=fraction_along_segment_at_500,
-        destination="synapses"
-    )
-
-    # also use the same pulse generator to provide input to other cells at
-    # different distances from soma
-    dist_vs_seg_dict = {}
-    dist_vs_seg_dict["500.0"] = first_apical_segment_at_500
-
-    for p in range(1, popsize):
-        s_at_d = cell.get_segments_at_distance(distances_for_inputs[p - 1])
-        first_apical_segment_at_d = None
-        frac_along_at_d = None
-        for seg, frac_along in s_at_d.items():
-            if seg in apical_segments:
-                first_apical_segment_at_d = seg
-                fraction_along_at_d = frac_along
-                break
-
-        if first_apical_segment_at_d is None:
-            print(f"No segment found at distance {distances_for_inputs[p - 1]}")
-            continue
-
-        print(f"{distances_for_inputs[p - 1]}: {first_apical_segment_at_d}")
-        dist_vs_seg_dict[distances_for_inputs[p - 1]] = first_apical_segment_at_d
-
-        input_id += 1
+    # input id, and cell id
+    ctr = 0
+    for d, val in dist_vs_seg_dict.items():
         inputlist.add(
-            neuroml.Input, id=input_id, target=f"../{population.id}[{p}]/{cellname}",
-            segment_id=first_apical_segment_at_d,
-            fraction_along=fraction_along_at_d,
+            neuroml.Input, id=ctr, target=f"../{population.id}[{ctr}]/{cellname}",
+            segment_id=val[0],
+            fraction_along=val[1],
             destination="synapses"
         )
-
-    # write segments at different distances to a file, useful later when
-    # plotting and so on
-    # should be identical for all, since we're using only the one cell
-    with open(f"{nml_doc_name}.segs.json", 'w') as f:
-        f.write(json.dumps(dist_vs_seg_dict))
+        ctr += 1
 
     nml_doc_name += ".net.nml"
     write_neuroml2_file(nml_doc, nml_doc_name)
@@ -200,7 +208,7 @@ def simulate_model(model_file_name: str, cellname: str,
     network_id = f"{cellname}_net"
     simulation_id = model_file_name.split(".")[0]
     simulation = LEMSSimulation(
-        sim_id=simulation_id, duration=duration_ms, dt=0.1, simulation_seed=123
+        sim_id=simulation_id, duration=duration_ms, dt=0.10, simulation_seed=123
     )
     simulation.assign_simulation_target(network_id)
     simulation.include_neuroml2_file(model_file_name)
@@ -230,7 +238,7 @@ def simulate_model(model_file_name: str, cellname: str,
     if not skip_run and plot:
         data_array = np.loadtxt("%s.v.dat" % simulation_id)
         segs_data = {}
-        with open(f"{simulation_id}.segs.json", 'r') as f:
+        with open(f"{cellname}.segs.json", 'r') as f:
             segs_data = json.load(f)
 
         x_vals = [data_array[:, 0]] * num_cells
