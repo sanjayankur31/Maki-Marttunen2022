@@ -60,7 +60,8 @@ def plot_if(simfolder: str) -> None:
                   yvalues,
                   title="F-I curve for different Ih/CaLVAst conductances",
                   xaxis="I(nA)", yaxis="f(spikes/s)",
-                  show_plot_already=False, labels=labels)
+                  show_plot_already=False, labels=labels,
+                  save_figure_to=f"{simdir}-F-I.png")
     plt.show()
 
 
