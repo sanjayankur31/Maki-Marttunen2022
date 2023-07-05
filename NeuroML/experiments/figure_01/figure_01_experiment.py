@@ -12,6 +12,7 @@ Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 import datetime
 import shutil
 import numpy as np
+import matplotlib
 
 import neuroml
 from neuroml.utils import component_factory
@@ -20,6 +21,9 @@ from pyneuroml.pynml import write_neuroml2_file
 from pyneuroml import pynml
 from pyneuroml.lems import LEMSSimulation
 from pyneuroml.plot import generate_plot
+
+# increase plot size
+matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
 
 
 def get_timestamp():

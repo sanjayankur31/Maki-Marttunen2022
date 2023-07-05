@@ -11,12 +11,17 @@ Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 
 import os
 import numpy as np
+import matplotlib
 
 from pyneuroml.analysis import generate_current_vs_frequency_curve
 
 from figure_01_experiment import (create_model, simulate_model,
                                   delete_neuron_special_dir,
                                   get_timestamp)
+
+
+# increase plot size
+matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
 
 
 def run():

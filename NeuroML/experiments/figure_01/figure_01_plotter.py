@@ -16,10 +16,14 @@ import re
 import logging
 import numpy
 from pyneuroml.plot.Plot import generate_plot
+import matplotlib
 from matplotlib import pyplot as plt
 
 logger = logging.Logger(__name__)
 logger.setLevel(logging.INFO)
+
+# increase plot size
+matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
 
 
 def plot_if(simfolder: str) -> None:
