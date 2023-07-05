@@ -11,6 +11,7 @@ Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 
 import numpy as np
 import json
+import matplotlib
 
 import neuroml
 from neuroml.utils import component_factory
@@ -25,11 +26,14 @@ from figure_01.figure_01_experiment import (create_modified_cell,
                                             get_timestamp)
 
 
+# increase plot size
+matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
+
 def get_segments_at_distances(celldir: str, cellname: str, segment_group: str,
                               distance_from_soma_inc: float, extra_points =
                               list[float]):
-    """Get dict of segments at different distances from the soma, and their
-    fraction along values
+    """Get dict of thickest segment at various distances from the soma, and
+    their fraction along values
 
     :param celldir: cell directory
     :type celldir: str
@@ -73,20 +77,26 @@ def get_segments_at_distances(celldir: str, cellname: str, segment_group: str,
 
     for d in distances:
         s_at_d = cell.get_segments_at_distance(d)
-        first_segment_at_d = None
+        thickest_segment_at_d = None
         fraction_along_at_d = None
+        segment_width_at_d = 0
         for seg, frac_along in s_at_d.items():
-            if seg in apical_segments:
-                first_segment_at_d = seg
+            thisseg_width_at_d = 0
+            thisseg = cell.get_segment(seg)
+            # proximal diam + frac_along * delta(diam)
+            thisseg_width_at_d = (cell.get_actual_proximal(seg).diameter + ((abs(thisseg.distal.diameter - cell.get_actual_proximal(seg).diameter)/cell.get_segment_length(seg)) * frac_along))
+            if (seg in apical_segments) and (thisseg_width_at_d > segment_width_at_d):
+                thickest_segment_at_d = seg
                 fraction_along_at_d = frac_along
+                segment_width_at_d = thisseg_width_at_d
                 break
 
-        if first_segment_at_d is None:
+        if thickest_segment_at_d is None:
             print(f"No segment found at distance {d}")
             continue
 
-        print(f"{d}: {first_segment_at_d}, {fraction_along_at_d}")
-        dist_vs_seg_dict[d] = [first_segment_at_d, fraction_along_at_d]
+        print(f"{d}: {thickest_segment_at_d}, {fraction_along_at_d}")
+        dist_vs_seg_dict[d] = [thickest_segment_at_d, fraction_along_at_d]
 
     # write segments at different distances to a file, useful later when
     # plotting
@@ -228,7 +238,7 @@ def simulate_model(model_file_name: str, cellname: str,
 
     pynml.run_lems_with_jneuroml_neuron(
         lems_simulation_file,
-        max_memory="2G",
+        max_memory="8G",
         nogui=True,
         plot=False,
         verbose=True,
@@ -244,7 +254,7 @@ def simulate_model(model_file_name: str, cellname: str,
         x_vals = [data_array[:, 0]] * num_cells
         y_vals = []
 
-        for i in range(0, num_cells):
+        for i in range(1, num_cells + 1):
             y_vals.append(data_array[:, i])
 
         generate_plot(
