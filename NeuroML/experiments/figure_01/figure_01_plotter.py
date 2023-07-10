@@ -53,14 +53,28 @@ def plot_if(simfolder: str) -> None:
     thresholds = []
     gmuls = []
     control_val = 0.0
+    camuls = []
     for afile in datafiles:
+        print(afile)
         threshold_file = afile.parent.__str__() + f"/threshold_i_{afile.name}"
         logger.debug(f"Processing {afile}")
-        # can be improved
-        label = re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 ", (re.sub(r"_m2.*", "_m2", afile.name.split(".")[0]))).split("_")[2:]
-        cellname = label[0].split(" ")[0]
-        gmul = float(label[0].split(" ")[1])  # type: float
-        flabel = f"{cellname}, gmul = {gmul}"
+        # can be improved: should ideally store tags in model and get values
+        # from there instead of parsing filenames
+        if "ScZ" not in afile.__str__():
+            label = re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 ", afile.name.split(".")[0]).split("_")[2:]
+            cellname = label[0].split(" ")[0]
+            gmul = float(label[0].split(" ")[1])  # type: float
+
+            flabel = f"{cellname}, gmul = {gmul}"
+        else:
+            label = re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 \5.\6 ", afile.name.split(".")[0]).split("_")[2:]
+            cellname = label[0].split(" ")[0]
+            gmul = float(label[0].split(" ")[1])  # type: float
+            camul = float(label[0].split(" ")[2])  # type: float
+            camuls.append(camul)
+
+            flabel = f"{cellname}, g_Ih * {gmul:.3f}, g_CaLVast * {camul:.3f}"
+
         logger.debug(f"Label: {flabel}")
         labels.append(flabel)
         data = (numpy.loadtxt(afile))
@@ -85,26 +99,27 @@ def plot_if(simfolder: str) -> None:
                   save_figure_to=f"{simdir}-F-I.png",
                   bottom_left_spines_only=True)
 
-    # add inset with threshold values
+    # add inset with threshold values for non ScZ sims
     # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/axes_demo.html#sphx-glr-gallery-subplots-axes-and-figures-axes-demo-py
     # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.gcf.html
-    fig = plt.gcf()
-    inset = fig.add_axes([0.2, 0.4, 0.1, 0.4])
-    # to get the same random colours that matplotlib uses
-    for i in range(0, len(gmuls)):
-        barlabel = ((thresholds[i] - control_val) / control_val) * 100
-        labelstr = f"{barlabel:.2f}%"
-        print(labelstr)
-        inset.bar(gmuls[i], thresholds[i])
-        if barlabel != 0:
-            inset.annotate(text=labelstr, xy=(gmuls[i], thresholds[i]),
-                           xytext=(gmuls[i] + 0.5, thresholds[i] - 0.01))
+    if len(camuls) == 0:
+        fig = plt.gcf()
+        inset = fig.add_axes([0.2, 0.4, 0.1, 0.4])
+        # to get the same random colours that matplotlib uses
+        for i in range(0, len(gmuls)):
+            barlabel = ((thresholds[i] - control_val) / control_val) * 100
+            labelstr = f"{barlabel:.2f}%"
+            print(labelstr)
+            inset.bar(gmuls[i], thresholds[i])
+            if barlabel != 0:
+                inset.annotate(text=labelstr, xy=(gmuls[i], thresholds[i]),
+                               xytext=(gmuls[i] + 0.5, thresholds[i] - 0.01))
 
-    inset.spines[['right', 'top']].set_visible(False)
-    inset.set_xlabel("g mul")
-    inset.set_ylabel("I (nA)")
-    inset.set_yticks([0, 0.05])
-    inset.set_xticks(gmuls)
+        inset.spines[['right', 'top']].set_visible(False)
+        inset.set_xlabel("g mul")
+        inset.set_ylabel("I (nA)")
+        inset.set_yticks([0, 0.05])
+        inset.set_xticks(gmuls)
     plt.show()
 
 
