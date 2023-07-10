@@ -42,19 +42,36 @@ def plot_if(simfolder: str) -> None:
     if not simdir.exists() or not simdir.is_dir():
         ValueError(f"A directory named {simfolder} does not exist or cannot be accessed")
 
-    datafiles = list(simdir.glob("*_if.dat"))
+    datafiles = list(simdir.glob("net*_if.dat"))
 
     xvalues = []
     yvalues = []
     labels = []
+    thresholds = []
+    gmuls = []
+    control_val = 0.0
     for afile in datafiles:
+        threshold_file = afile.parent.__str__() + f"/threshold_i_{afile.name}"
+        logger.debug(f"Processing {afile}")
         # can be improved
-        label = "_".join(re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 ", (re.sub(r"_m2.*", "_m2", afile.name.split(".")[0]))).split("_")[2:])
-        labels.append(label)
+        label = re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 ", (re.sub(r"_m2.*", "_m2", afile.name.split(".")[0]))).split("_")[2:]
+        cellname = label[0].split(" ")[0]
+        gmul = float(label[0].split(" ")[1])  # type: float
+        flabel = f"{cellname}, gmul = {gmul}"
+        logger.debug(f"Label: {flabel}")
+        labels.append(flabel)
         data = (numpy.loadtxt(afile))
+        threshold_data = float(numpy.loadtxt(threshold_file))
+        thresholds.append(threshold_data)
+        gmuls.append(gmul)
+        if gmul == 1:
+            control_val = threshold_data
         # convert nA to pA
         xvalues.append(data[:, 0] / 1000)
         yvalues.append(data[:, 1])
+
+    logger.debug(thresholds)
+    logger.debug(gmuls)
 
     generate_plot(xvalues,
                   yvalues,
@@ -62,6 +79,27 @@ def plot_if(simfolder: str) -> None:
                   xaxis="I(nA)", yaxis="f(spikes/s)",
                   show_plot_already=False, labels=labels,
                   save_figure_to=f"{simdir}-F-I.png")
+
+    # add inset with threshold values
+    # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/axes_demo.html#sphx-glr-gallery-subplots-axes-and-figures-axes-demo-py
+    # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.gcf.html
+    fig = plt.gcf()
+    inset = fig.add_axes([0.2, 0.4, 0.1, 0.4])
+    # to get the same random colours that matplotlib uses
+    for i in range(0, len(gmuls)):
+        barlabel = ((thresholds[i] - control_val) / control_val) * 100
+        labelstr = f"{barlabel:.2f}%"
+        print(labelstr)
+        inset.bar(gmuls[i], thresholds[i])
+        if barlabel != 0:
+            inset.annotate(text=labelstr, xy=(gmuls[i], thresholds[i]),
+                           xytext=(gmuls[i] + 0.5, thresholds[i] - 0.01))
+
+    inset.spines[['right', 'top']].set_visible(False)
+    inset.set_xlabel("g mul")
+    inset.set_ylabel("I (nA)")
+    inset.set_yticks([0, 0.05])
+    inset.set_xticks(gmuls)
     plt.show()
 
 
