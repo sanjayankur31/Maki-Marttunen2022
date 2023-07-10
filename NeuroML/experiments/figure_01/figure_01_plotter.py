@@ -118,7 +118,8 @@ def plot_if(simfolder: str) -> None:
             inset.bar(gmuls[i], thresholds[i])
             if barlabel != 0:
                 inset.annotate(text=labelstr, xy=(gmuls[i], thresholds[i]),
-                               xytext=(gmuls[i] + 0.5, thresholds[i] - 0.01))
+                               xytext=(gmuls[i] + 0.5, thresholds[i] - 0.01),
+                               fontsize=30)
 
         inset.spines[['right', 'top']].set_visible(False)
         inset.set_xlabel("g mul")
