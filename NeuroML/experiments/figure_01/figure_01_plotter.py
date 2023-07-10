@@ -62,7 +62,7 @@ def plot_if(simfolder: str) -> None:
             cellname = label[0].split(" ")[0]
             gmul = float(label[0].split(" ")[1])  # type: float
 
-            flabel = f"{cellname}, g_Ih = {gmul:.3f}"
+            flabel = f"{cellname}, g_Ih * {gmul:.3f}"
         else:
             label = re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 \5.\6 ", afile.name.split(".")[0]).split("_")[2:]
             cellname = label[0].split(" ")[0]
@@ -100,11 +100,11 @@ def plot_if(simfolder: str) -> None:
     # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.gcf.html
     fig = plt.gcf()
     if len(camuls) == 0:
-        inset = fig.add_axes([0.2, 0.4, 0.1, 0.4])
+        inset = fig.add_axes([0.15, 0.4, 0.1, 0.4])
         # to get the same random colours that matplotlib uses
         for i in range(0, len(gmuls)):
             barlabel = ((thresholds[i] - control_val) / control_val) * 100
-            labelstr = f"{barlabel:.2f}%"
+            labelstr = f"{barlabel:+.2f}%"
             print(labelstr)
             inset.bar(gmuls[i], thresholds[i])
             if barlabel != 0:
@@ -112,7 +112,7 @@ def plot_if(simfolder: str) -> None:
                                xytext=(gmuls[i] + 0.5, thresholds[i] - 0.01))
 
         inset.spines[['right', 'top']].set_visible(False)
-        inset.set_xlabel("g mul")
+        inset.set_xlabel("g_Ih *")
         inset.set_ylabel("I (nA)")
         inset.set_xticks(gmuls)
     plt.tight_layout()
