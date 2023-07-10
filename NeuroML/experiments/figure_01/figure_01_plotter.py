@@ -82,7 +82,8 @@ def plot_if(simfolder: str) -> None:
                   title="F-I curve for different Ih/CaLVAst conductances",
                   xaxis="I(nA)", yaxis="f(spikes/s)",
                   show_plot_already=False, labels=labels,
-                  save_figure_to=f"{simdir}-F-I.png")
+                  save_figure_to=f"{simdir}-F-I.png",
+                  bottom_left_spines_only=True)
 
     # add inset with threshold values
     # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/axes_demo.html#sphx-glr-gallery-subplots-axes-and-figures-axes-demo-py
