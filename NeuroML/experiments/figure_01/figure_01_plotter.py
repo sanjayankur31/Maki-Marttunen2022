@@ -62,7 +62,7 @@ def plot_if(simfolder: str) -> None:
             cellname = label[0].split(" ")[0]
             gmul = float(label[0].split(" ")[1])  # type: float
 
-            flabel = f"{cellname}, gmul = {gmul}"
+            flabel = f"{cellname}, g_Ih = {gmul:.3f}"
         else:
             label = re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 \5.\6 ", afile.name.split(".")[0]).split("_")[2:]
             cellname = label[0].split(" ")[0]
@@ -92,7 +92,8 @@ def plot_if(simfolder: str) -> None:
                   title="F-I curve for different Ih/CaLVAst conductances",
                   xaxis="I(nA)", yaxis="f(spikes/s)",
                   show_plot_already=False, labels=labels,
-                  bottom_left_spines_only=True, close_plot=False)
+                  bottom_left_spines_only=True, close_plot=False,
+                  cols_in_legend_box=1, legend_position="lower right")
 
     # add inset with threshold values for non ScZ sims
     # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/axes_demo.html#sphx-glr-gallery-subplots-axes-and-figures-axes-demo-py
@@ -113,8 +114,8 @@ def plot_if(simfolder: str) -> None:
         inset.spines[['right', 'top']].set_visible(False)
         inset.set_xlabel("g mul")
         inset.set_ylabel("I (nA)")
-        inset.set_yticks([0, 0.05])
         inset.set_xticks(gmuls)
+    plt.tight_layout()
     fig.savefig(f"{simdir}-F-I.png")
     plt.show()
 
