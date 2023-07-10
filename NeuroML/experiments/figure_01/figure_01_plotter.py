@@ -25,8 +25,13 @@ logger.setLevel(logging.INFO)
 # increase plot size
 matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
 matplotlib.rcParams['font.weight'] = "bold"
+matplotlib.rcParams['font.size'] = 35
 matplotlib.rcParams['axes.labelweight'] = "bold"
 matplotlib.rcParams['lines.linewidth'] = 3
+matplotlib.rcParams['legend.fontsize'] = 25
+matplotlib.rcParams['axes.labelsize'] = 25
+matplotlib.rcParams['xtick.labelsize'] = 25
+matplotlib.rcParams['ytick.labelsize'] = 25
 
 
 def plot_if(simfolder: str) -> None:
