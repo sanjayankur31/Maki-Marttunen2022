@@ -24,6 +24,9 @@ logger.setLevel(logging.INFO)
 
 # increase plot size
 matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
+matplotlib.rcParams['font.weight'] = "bold"
+matplotlib.rcParams['axes.labelweight'] = "bold"
+matplotlib.rcParams['lines.linewidth'] = 3
 
 
 def plot_if(simfolder: str) -> None:
@@ -58,6 +61,7 @@ def plot_if(simfolder: str) -> None:
 
     generate_plot(xvalues,
                   yvalues,
+                  linewidths=[5] * len(xvalues),
                   title="F-I curve for different Ih/CaLVAst conductances",
                   xaxis="I(nA)", yaxis="f(spikes/s)",
                   show_plot_already=False, labels=labels,
