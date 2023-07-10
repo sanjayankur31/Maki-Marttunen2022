@@ -42,7 +42,7 @@ def plot_if(simfolder: str) -> None:
     if not simdir.exists() or not simdir.is_dir():
         ValueError(f"A directory named {simfolder} does not exist or cannot be accessed")
 
-    datafiles = list(simdir.glob("net*_if.dat"))
+    datafiles = sorted(list(simdir.glob("net*_if.dat")))
 
     xvalues = []
     yvalues = []
