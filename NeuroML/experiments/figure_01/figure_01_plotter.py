@@ -96,14 +96,13 @@ def plot_if(simfolder: str) -> None:
                   title="F-I curve for different Ih/CaLVAst conductances",
                   xaxis="I(nA)", yaxis="f(spikes/s)",
                   show_plot_already=False, labels=labels,
-                  save_figure_to=f"{simdir}-F-I.png",
-                  bottom_left_spines_only=True)
+                  bottom_left_spines_only=True, close_plot=False)
 
     # add inset with threshold values for non ScZ sims
     # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/axes_demo.html#sphx-glr-gallery-subplots-axes-and-figures-axes-demo-py
     # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.gcf.html
+    fig = plt.gcf()
     if len(camuls) == 0:
-        fig = plt.gcf()
         inset = fig.add_axes([0.2, 0.4, 0.1, 0.4])
         # to get the same random colours that matplotlib uses
         for i in range(0, len(gmuls)):
@@ -120,6 +119,7 @@ def plot_if(simfolder: str) -> None:
         inset.set_ylabel("I (nA)")
         inset.set_yticks([0, 0.05])
         inset.set_xticks(gmuls)
+    fig.savefig(f"{simdir}-F-I.png")
     plt.show()
 
 
