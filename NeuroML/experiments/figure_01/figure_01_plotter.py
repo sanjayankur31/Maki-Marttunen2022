@@ -42,13 +42,14 @@ def plot_if(simfolder: str) -> None:
 
     :param simfolder: name of folder containing simulation and generated data
     :type simfolder: str
-    :raises ValueError: if a dir named `simfolder` does not exist (or cannot be accessed for some reason)
+    :raises ValueError: if a dir named `simfolder` does not exist (or cannot be
+        accessed for some reason)
     :returns: None
 
     """
     simdir = Path(simfolder)
     if not simdir.exists() or not simdir.is_dir():
-        ValueError(f"A directory named {simfolder} does not exist or cannot be accessed")
+        raise ValueError(f"A directory named {simfolder} does not exist or cannot be accessed")
 
     datafiles = sorted(list(simdir.glob("net*_if.dat")))
 
@@ -61,16 +62,20 @@ def plot_if(simfolder: str) -> None:
     camuls = []
     for afile in datafiles:
         print(afile)
-        threshold_file = afile.parent.__str__() + f"/threshold_i_{afile.name}"
-        logger.debug(f"Processing {afile}")
+        data = numpy.loadtxt(afile)
+        threshold_file = str(afile.parent) + f"/threshold_i_{afile.name}"
+        threshold_data = float(numpy.loadtxt(threshold_file))
+        logger.debug("Processing %s", afile)
         # can be improved: should ideally store tags in model and get values
         # from there instead of parsing filenames
-        if "ScZ" not in afile.__str__():
+        if "ScZ" not in str(afile):
             label = re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 ", afile.name.split(".")[0]).split("_")[2:]
             cellname = label[0].split(" ")[0]
             gmul = float(label[0].split(" ")[1])  # type: float
+            if gmul == 1:
+                control_val = threshold_data
 
-            flabel = f"{cellname}, g_Ih = {gmul:.3f}"
+            flabel = f"g_Ih * {gmul:.3f}"
         else:
             label = re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 \5.\6 ", afile.name.split(".")[0]).split("_")[2:]
             cellname = label[0].split(" ")[0]
@@ -78,16 +83,14 @@ def plot_if(simfolder: str) -> None:
             camul = float(label[0].split(" ")[2])  # type: float
             camuls.append(camul)
 
-            flabel = f"{cellname}, g_Ih * {gmul:.3f}, g_CaLVast * {camul:.3f}"
+            if gmul == 1 and camul == 1:
+                control_val = threshold_data
+            flabel = f"g_Ih * {gmul:.3f}, g_CaLVast * {camul:.3f}"
 
-        logger.debug(f"Label: {flabel}")
+        logger.debug("Label: %s", flabel)
         labels.append(flabel)
-        data = (numpy.loadtxt(afile))
-        threshold_data = float(numpy.loadtxt(threshold_file))
         thresholds.append(threshold_data)
         gmuls.append(gmul)
-        if gmul == 1:
-            control_val = threshold_data
         # convert nA to pA
         xvalues.append(data[:, 0] / 1000)
         yvalues.append(data[:, 1])
@@ -95,36 +98,68 @@ def plot_if(simfolder: str) -> None:
     logger.debug(thresholds)
     logger.debug(gmuls)
 
+    # tweak title
+    title = "F-I curve"
+    if cellname == "L5PC":
+        title += ": rodent "
+    else:
+        title += ":  human "
+
+    if "ScZ" in datafiles[0].parent.name:
+        title += "(SCZ)"
+    else:
+        title += "(Health)"
+
     generate_plot(xvalues,
                   yvalues,
                   linewidths=[5] * len(xvalues),
-                  title="F-I curve for different Ih/CaLVAst conductances",
+                  title=title,
                   xaxis="I(nA)", yaxis="f(spikes/s)",
                   show_plot_already=False, labels=labels,
                   bottom_left_spines_only=True, close_plot=False,
-                  cols_in_legend_box=1, legend_position="lower right")
+                  cols_in_legend_box=1, legend_position="lower right",
+                  title_above_plot=True)
 
     # add inset with threshold values for non ScZ sims
     # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/axes_demo.html#sphx-glr-gallery-subplots-axes-and-figures-axes-demo-py
     # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.gcf.html
     fig = plt.gcf()
+    inset = fig.add_axes([0.15, 0.5, 0.1, 0.4])
+    # if only g_Ih was changed, different inset
     if len(camuls) == 0:
-        inset = fig.add_axes([0.2, 0.4, 0.1, 0.4])
         # to get the same random colours that matplotlib uses
         for i in range(0, len(gmuls)):
             barlabel = ((thresholds[i] - control_val) / control_val) * 100
-            labelstr = f"{barlabel:.2f}%"
+            labelstr = f"{barlabel:+.2f}%"
             print(labelstr)
             inset.bar(gmuls[i], thresholds[i])
             if barlabel != 0:
                 inset.annotate(text=labelstr, xy=(gmuls[i], thresholds[i]),
-                               xytext=(gmuls[i] + 0.5, thresholds[i] - 0.01),
+                               xytext=(i * 1.2, 0.9 * thresholds[i]))
                                fontsize=30)
 
         inset.spines[['right', 'top']].set_visible(False)
         inset.set_xlabel("g mul")
         inset.set_ylabel("I (nA)")
         inset.set_xticks(gmuls)
+    else:
+        xtics = []
+        for i in range(0, len(gmuls)):
+            barlabel = ((thresholds[i] - control_val) / control_val) * 100
+            labelstr = f"{barlabel:+.2f}%"
+            inset.bar(i, thresholds[i])
+            if gmuls[i] == 1 and camuls[i] == 1:
+                xtics.append("Control")
+            else:
+                xtics.append(f"g_Ih * {gmuls[i]:.2f}, g_Ca_LVAst * {camuls[i]:.2f}")
+            if barlabel != 0:
+                inset.annotate(text=labelstr, xy=(i, thresholds[i]),
+                               xytext=(i * 1.2, 0.9 * thresholds[i]))
+        inset.set_xlabel("")
+        inset.set_xticks(ticks=list(range(len(gmuls))), labels=xtics, rotation="vertical")
+
+    inset.spines[['right', 'top']].set_visible(False)
+    inset.set_ylabel("I (nA)")
     plt.tight_layout()
     fig.savefig(f"{simdir}-F-I.png")
     plt.show()

@@ -43,8 +43,8 @@ def run():
     os.mkdir(simdir)
     os.chdir(simdir)
 
-    dist_vs_seg_dict = get_segments_at_distances(celldir,cellname,
-                              "apical_dendrites_group", 50., [500])
+    dist_vs_seg_dict = get_segments_at_distances(celldir, cellname,
+                                                 "apical_dendrites_group", 50., [500])
 
     # g: 0 is blocked, 1 is unchanged
     # log scale starting at 10, but include 30, 100 for figure 2a
@@ -52,7 +52,7 @@ def run():
     current_range.extend([30, 100])
     current_range = sorted(current_range)
     lems_file = ""
-    for g in [0.0, 1.0]:
+    for g in [0.001, 1.0]:
         for current in current_range:
             model_file_name = create_model(
                 cellname=cellname,
