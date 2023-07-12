@@ -67,7 +67,7 @@ def plot_if(simfolder: str) -> None:
             if gmul == 1:
                 control_val = threshold_data
 
-            flabel = f"{cellname}, g_Ih * {gmul:.3f}"
+            flabel = f"g_Ih * {gmul:.3f}"
         else:
             label = re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 \5.\6 ", afile.name.split(".")[0]).split("_")[2:]
             cellname = label[0].split(" ")[0]
@@ -77,7 +77,7 @@ def plot_if(simfolder: str) -> None:
 
             if gmul == 1 and camul == 1:
                 control_val = threshold_data
-            flabel = f"{cellname}, g_Ih * {gmul:.3f}, g_CaLVast * {camul:.3f}"
+            flabel = f"g_Ih * {gmul:.3f}, g_CaLVast * {camul:.3f}"
 
         logger.debug("Label: %s", flabel)
         labels.append(flabel)
@@ -98,9 +98,9 @@ def plot_if(simfolder: str) -> None:
         title += ":  human "
 
     if "ScZ" in datafiles[0].parent.name:
-        title += "(ScZ)"
+        title += "(SCZ)"
     else:
-        title += "(health)"
+        title += "(Health)"
 
     generate_plot(xvalues,
                   yvalues,
@@ -140,8 +140,8 @@ def plot_if(simfolder: str) -> None:
             else:
                 xtics.append(f"g_Ih * {gmuls[i]:.2f}, g_Ca_LVAst * {camuls[i]:.2f}")
             if barlabel != 0:
-                inset.annotate(text=labelstr, xy=(gmuls[i], thresholds[i]),
-                               xytext=(gmuls[i] + 0.5, thresholds[i] - 0.01))
+                inset.annotate(text=labelstr, xy=(i, thresholds[i]),
+                               xytext=(i * 1.2, 0.9 * thresholds[i]))
         inset.set_xlabel("")
         inset.set_xticks(ticks=list(range(len(gmuls))), labels=xtics, rotation="vertical")
 
