@@ -27,11 +27,13 @@ matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
 matplotlib.rcParams['font.weight'] = "bold"
 matplotlib.rcParams['font.size'] = 35
 matplotlib.rcParams['axes.labelweight'] = "bold"
+matplotlib.rcParams['axes.titlesize'] = "xx-large"
+matplotlib.rcParams['axes.titleweight'] = "bold"
 matplotlib.rcParams['lines.linewidth'] = 3
 matplotlib.rcParams['legend.fontsize'] = 25
 matplotlib.rcParams['axes.labelsize'] = 25
-matplotlib.rcParams['xtick.labelsize'] = 25
-matplotlib.rcParams['ytick.labelsize'] = 25
+matplotlib.rcParams['xtick.labelsize'] = 30
+matplotlib.rcParams['ytick.labelsize'] = 30
 
 
 def plot_if(simfolder: str) -> None:
@@ -118,13 +120,23 @@ def plot_if(simfolder: str) -> None:
                   show_plot_already=False, labels=labels,
                   bottom_left_spines_only=True, close_plot=False,
                   cols_in_legend_box=1, legend_position="lower right",
-                  title_above_plot=True)
+                  title_above_plot=True, show_xticklabels=False)
+
+    # skip tick labels for clarity
+    ticks = len(xvalues[0])
+    xtick_labels = []
+    for i in range(ticks):
+        if i % int(ticks / 4) == 0:
+            xtick_labels.append(f"{xvalues[0][i]}")
+        else:
+            xtick_labels.append("")
+    plt.xticks(xvalues[0], labels=xtick_labels)
 
     # add inset with threshold values for non ScZ sims
     # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/axes_demo.html#sphx-glr-gallery-subplots-axes-and-figures-axes-demo-py
     # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.gcf.html
     fig = plt.gcf()
-    inset = fig.add_axes([0.15, 0.5, 0.1, 0.4])
+    inset = fig.add_axes([0.18, 0.56, 0.1, 0.4])
     # if only g_Ih was changed, different inset
     if len(camuls) == 0:
         # to get the same random colours that matplotlib uses
@@ -135,11 +147,11 @@ def plot_if(simfolder: str) -> None:
             inset.bar(gmuls[i], thresholds[i])
             if barlabel != 0:
                 inset.annotate(text=labelstr, xy=(gmuls[i], thresholds[i]),
-                               xytext=(i * 1.2, 0.9 * thresholds[i]))
-                               fontsize=30)
+                               xytext=(i * 0.9, 1.04 * thresholds[i]),
+                               fontsize=25)
 
         inset.spines[['right', 'top']].set_visible(False)
-        inset.set_xlabel("g mul")
+        inset.set_xlabel("g_Ih*")
         inset.set_ylabel("I (nA)")
         inset.set_xticks(gmuls)
     else:
@@ -151,10 +163,11 @@ def plot_if(simfolder: str) -> None:
             if gmuls[i] == 1 and camuls[i] == 1:
                 xtics.append("Control")
             else:
-                xtics.append(f"g_Ih * {gmuls[i]:.2f}, g_Ca_LVAst * {camuls[i]:.2f}")
+                xtics.append(f"g_Ih*{gmuls[i]:.2f}, g_Ca*{camuls[i]:.2f}")
             if barlabel != 0:
                 inset.annotate(text=labelstr, xy=(i, thresholds[i]),
-                               xytext=(i * 1.2, 0.9 * thresholds[i]))
+                               xytext=(i * 0.9, 1.04 * thresholds[i]),
+                               fontsize=25)
         inset.set_xlabel("")
         inset.set_xticks(ticks=list(range(len(gmuls))), labels=xtics, rotation="vertical")
 
