@@ -31,7 +31,7 @@ matplotlib.rcParams['axes.titlesize'] = "xx-large"
 matplotlib.rcParams['axes.titleweight'] = "bold"
 matplotlib.rcParams['lines.linewidth'] = 3
 matplotlib.rcParams['legend.fontsize'] = 25
-matplotlib.rcParams['axes.labelsize'] = 25
+matplotlib.rcParams['axes.labelsize'] = 35
 matplotlib.rcParams['xtick.labelsize'] = 30
 matplotlib.rcParams['ytick.labelsize'] = 30
 
@@ -137,7 +137,7 @@ def plot_if(simfolder: str) -> None:
         else:
             xtick_labels.append("")
     plt.xticks(xvalues[0], labels=xtick_labels)
-    plt.title(title, fontsize=25)
+    plt.title(title, fontsize=35)
 
     # add inset with threshold values for non ScZ sims
     # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/axes_demo.html#sphx-glr-gallery-subplots-axes-and-figures-axes-demo-py
