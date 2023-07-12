@@ -38,6 +38,7 @@ def run():
 
     # [1.1024124036546668, 1.128775065748801]
     for mul_Ca_LVAst, mul_Ih in [
+            [1.0, 1.0],
             [1.1024124036546668, 1.0],
             [1.0, 1.128775065748801],
             [1.1024124036546668, 1.128775065748801]
@@ -58,7 +59,7 @@ def run():
         generate_current_vs_frequency_curve(
             nml2_file=model_file_name,
             cell_id=cellname,
-            custom_amps_nA=list(np.arange(0, 1.6, 0.1)),
+            custom_amps_nA=list(np.arange(0, 1.6, 0.01)),
             analysis_duration=2000,
             analysis_delay=200,
             temperature="34 degC",

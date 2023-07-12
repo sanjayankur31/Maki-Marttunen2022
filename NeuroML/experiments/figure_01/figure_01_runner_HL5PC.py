@@ -53,7 +53,7 @@ def run():
         generate_current_vs_frequency_curve(
             nml2_file=model_file_name,
             cell_id="HL5PC",
-            custom_amps_nA=list(np.arange(0E-3, 150E-3, 5E-3)),
+            custom_amps_nA=list(np.arange(0E-3, 150E-3, 5E-4)),
             analysis_duration=2000,
             analysis_delay=200,
             temperature="34 degC",
