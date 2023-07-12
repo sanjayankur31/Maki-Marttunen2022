@@ -55,6 +55,12 @@ def plot_if(simfolder: str) -> None:
 
     datafiles = sorted(list(simdir.glob("net*_if.dat")))
 
+    # temporary hack to make the control for the healthy exps be plotted first
+    if "ScZ" not in datafiles[0].parent.name:
+        temp = datafiles[0]
+        datafiles[0] = datafiles[1]
+        datafiles[1] = temp
+
     xvalues = []
     yvalues = []
     labels = []
@@ -115,7 +121,7 @@ def plot_if(simfolder: str) -> None:
     generate_plot(xvalues,
                   yvalues,
                   linewidths=[5] * len(xvalues),
-                  title=title,
+                  title=None,
                   xaxis="I(nA)", yaxis="f(spikes/s)",
                   show_plot_already=False, labels=labels,
                   bottom_left_spines_only=True, close_plot=False,
@@ -131,6 +137,7 @@ def plot_if(simfolder: str) -> None:
         else:
             xtick_labels.append("")
     plt.xticks(xvalues[0], labels=xtick_labels)
+    plt.title(title, fontsize=25)
 
     # add inset with threshold values for non ScZ sims
     # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/axes_demo.html#sphx-glr-gallery-subplots-axes-and-figures-axes-demo-py
