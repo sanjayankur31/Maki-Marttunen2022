@@ -107,11 +107,11 @@ def plot_if(simfolder: str) -> None:
     logger.debug(gmuls)
 
     # tweak title
-    title = "F-I curve"
+    title = "    "
     if cellname == "L5PC":
-        title += ": rodent "
+        title += "Rodent "
     else:
-        title += ":  human "
+        title += "Human "
 
     if "ScZ" in datafiles[0].parent.name:
         title += "(SCZ)"
@@ -137,7 +137,7 @@ def plot_if(simfolder: str) -> None:
         else:
             xtick_labels.append("")
     plt.xticks(xvalues[0], labels=xtick_labels)
-    plt.title(title, fontsize=35)
+    plt.title(title, fontsize=60)
 
     # add inset with threshold values for non ScZ sims
     # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/axes_demo.html#sphx-glr-gallery-subplots-axes-and-figures-axes-demo-py
