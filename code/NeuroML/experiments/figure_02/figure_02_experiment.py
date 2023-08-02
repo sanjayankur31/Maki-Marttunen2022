@@ -21,9 +21,8 @@ from pyneuroml import pynml
 from pyneuroml.lems import LEMSSimulation
 from pyneuroml.plot import generate_plot
 
-from figure_01.figure_01_experiment import (create_modified_cell,
-                                            delete_neuron_special_dir,
-                                            get_timestamp)
+from figure_01.figure_01_experiment import (create_modified_cell)
+from common import (delete_neuron_special_dir, get_timestamp)
 
 
 # increase plot size

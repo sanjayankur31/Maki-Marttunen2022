@@ -23,8 +23,8 @@ from pyneuroml.analysis import generate_current_vs_frequency_curve
 from pyneuroml.plot import generate_plot
 
 from figure_02_experiment import (create_model, simulate_model,
-                                  delete_neuron_special_dir,
-                                  get_timestamp, get_segments_at_distances)
+                                  get_segments_at_distances)
+from common import (delete_neuron_special_dir, get_timestamp)
 
 
 # increase plot size

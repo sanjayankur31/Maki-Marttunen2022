@@ -9,8 +9,6 @@ Copyright 2022 Ankur Sinha
 Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 """
 
-import datetime
-import shutil
 import numpy as np
 import matplotlib
 
@@ -21,14 +19,10 @@ from pyneuroml.pynml import write_neuroml2_file
 from pyneuroml import pynml
 from pyneuroml.lems import LEMSSimulation
 from pyneuroml.plot import generate_plot
+from common import get_timestamp, delete_neuron_special_dir
 
 # increase plot size
 matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
-
-
-def get_timestamp():
-    """Get current time stamp"""
-    return datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 
 def create_modified_cell(cell, g_Ih_multiplier, g_Ca_LVAst_multiplier):
@@ -231,12 +225,3 @@ def simulate_model(model_file_name: str, cellname: str, plot: bool = True,
             xaxis="time (s)",
             yaxis="membrane potential (V)",
         )
-
-
-def delete_neuron_special_dir():
-    """Delete neuron special directory containing compiled mods
-    """
-    try:
-        shutil.rmtree("x86_64")
-    except FileNotFoundError:
-        pass

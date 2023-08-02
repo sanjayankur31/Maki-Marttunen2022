@@ -14,17 +14,11 @@ import sys
 # needs to be done in all runner scripts
 sys.path.append(os.path.dirname(os.path.abspath(".")))
 
-
 import numpy as np
 import matplotlib
-import json
 
-from pyneuroml.analysis import generate_current_vs_frequency_curve
-from pyneuroml.plot import generate_plot
-
-from figure_02_experiment import (create_model, simulate_model,
-                                  delete_neuron_special_dir,
-                                  get_timestamp, get_segments_at_distances)
+from figure_02_experiment import (create_model, simulate_model,get_segments_at_distances)
+from common import (delete_neuron_special_dir, get_timestamp)
 
 
 # increase plot size

@@ -14,9 +14,8 @@ import matplotlib
 
 from pyneuroml.analysis import generate_current_vs_frequency_curve
 
-from figure_01_experiment import (create_model, simulate_model,
-                                  delete_neuron_special_dir,
-                                  get_timestamp)
+from figure_01_experiment import (create_model, simulate_model)
+from common import (delete_neuron_special_dir, get_timestamp)
 
 
 # increase plot size
