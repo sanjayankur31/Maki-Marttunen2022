@@ -26,7 +26,9 @@ def get_abs_celldir(cellfolder_name):
 
     """
     celldir_rel = f"../../cells/{cellfolder_name}"
-    return os.path.abspath(celldir_rel)
+    celldir_abs = os.path.abspath(celldir_rel)
+    print(f"Celldir is {celldir_abs}")
+    return celldir_abs
 
 
 def get_timestamp():
@@ -64,4 +66,6 @@ def get_run_dir(cellname, experiment_name, root=None, timestamp=None):
         root = "../../../../simdata/"
 
     root_abs = os.path.abspath(root)
-    return f"{root_abs}/{experiment_name}/{timestamp}_{cellname}"
+    rootdir = f"{root_abs}/{experiment_name}/{timestamp}_{cellname}"
+    print(f"Run dir is {rootdir}")
+    return rootdir
