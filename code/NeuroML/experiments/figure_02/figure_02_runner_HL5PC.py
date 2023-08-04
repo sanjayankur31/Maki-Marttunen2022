@@ -13,33 +13,30 @@ import sys
 # add experiments folder to path to ensure things can be imported
 # needs to be done in all runner scripts
 sys.path.append(os.path.dirname(os.path.abspath(".")))
+sys.path.append(os.path.dirname(os.path.abspath("..")))
 
 
 import numpy as np
 import matplotlib
-import json
-
-from pyneuroml.analysis import generate_current_vs_frequency_curve
-from pyneuroml.plot import generate_plot
 
 from figure_02_experiment import (create_model, simulate_model,
                                   get_segments_at_distances)
-from common import (delete_neuron_special_dir, get_timestamp)
+from common import (delete_neuron_special_dir, get_abs_celldir, get_run_dir)
 
 
 # increase plot size
 matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
 
+
 def run():
     """Run simulations """
     simlist = []
     cellname = "HL5PC"
-    celldir = "../../../cells/SkinnerLabHL5PC/"
-
     # run simulations in new directory so that they don't conflict with
     # existing files.
-    currenttime = get_timestamp()
-    simdir = f"{currenttime}_{cellname}"
+    celldir = get_abs_celldir("SkinnerLabHL5PC")
+    simdir = get_run_dir(cellname, "figure_02")
+
     os.mkdir(simdir)
     os.chdir(simdir)
 

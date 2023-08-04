@@ -13,27 +13,27 @@ import sys
 # add experiments folder to path to ensure things can be imported
 # needs to be done in all runner scripts
 sys.path.append(os.path.dirname(os.path.abspath(".")))
+sys.path.append(os.path.dirname(os.path.abspath("..")))
 
 import numpy as np
 import matplotlib
 
-from figure_02_experiment import (create_model, simulate_model,get_segments_at_distances)
-from common import (delete_neuron_special_dir, get_timestamp)
+from figure_02_experiment import (create_model, simulate_model, get_segments_at_distances)
+from common import (delete_neuron_special_dir, get_abs_celldir,
+                    get_run_dir)
 
 
 # increase plot size
 matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
 
+
 def run():
     """Run simulations """
     simlist = []
     cellname = "L5PC"
-    celldir = "../../../cells/HayEtAlL5PC/"
-
-    # run simulations in new directory so that they don't conflict with
-    # existing files.
-    currenttime = get_timestamp()
-    simdir = f"{currenttime}_{cellname}"
+    # relative to simdata/figure_01/{simrun folder}
+    celldir = get_abs_celldir("HayEtAlL5PC")
+    simdir = get_run_dir(cellname, "figure_02")
     os.mkdir(simdir)
     os.chdir(simdir)
 
