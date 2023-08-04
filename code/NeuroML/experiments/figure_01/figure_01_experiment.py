@@ -9,6 +9,11 @@ Copyright 2022 Ankur Sinha
 Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 """
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(".")))
+sys.path.append(os.path.dirname(os.path.abspath("..")))
+
 import numpy as np
 import matplotlib
 

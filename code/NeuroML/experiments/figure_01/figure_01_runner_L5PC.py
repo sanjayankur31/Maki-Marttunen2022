@@ -8,14 +8,18 @@ Copyright 2022 Ankur Sinha
 Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 """
 
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.abspath(".")))
+sys.path.append(os.path.dirname(os.path.abspath("..")))
+
 import numpy as np
 import matplotlib
 
 from pyneuroml.analysis import generate_current_vs_frequency_curve
 
 from figure_01_experiment import (create_model, simulate_model)
-from common import (delete_neuron_special_dir, get_timestamp)
+from common import (delete_neuron_special_dir, get_run_dir, get_abs_celldir)
 
 
 # increase plot size
@@ -26,12 +30,9 @@ def run():
     """Run simulations """
     simlist = []
     cellname = "L5PC"
-    celldir = "../../../cells/HayEtAlL5PC/"
-
-    # run simulations in new directory so that they don't conflict with
-    # existing files.
-    currenttime = get_timestamp()
-    simdir = f"{currenttime}_{cellname}"
+    # relative to simdata/figure_01/{simrun folder}
+    celldir = get_abs_celldir("HayEtAlL5PC")
+    simdir = get_run_dir(cellname, "figure_01")
     os.mkdir(simdir)
     os.chdir(simdir)
 
@@ -52,7 +53,7 @@ def run():
         generate_current_vs_frequency_curve(
             nml2_file=model_file_name,
             cell_id=cellname,
-            custom_amps_nA=list(np.arange(0, 1.6, 0.01)),
+            custom_amps_nA=list(np.arange(0, 1.6, 0.4)),
             analysis_duration=2000,
             analysis_delay=200,
             temperature="34 degC",

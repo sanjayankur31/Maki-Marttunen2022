@@ -9,14 +9,19 @@ Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 """
 
 
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.abspath(".")))
+sys.path.append(os.path.dirname(os.path.abspath("..")))
+
 import numpy as np
 import matplotlib
 
 from pyneuroml.analysis import generate_current_vs_frequency_curve
 
 from figure_01_experiment import (create_model, simulate_model)
-from common import (delete_neuron_special_dir, get_timestamp)
+from common import (delete_neuron_special_dir, get_run_dir,
+                    get_abs_celldir)
 
 
 # increase plot size
@@ -27,12 +32,9 @@ def run():
     """Run simulations"""
     simlist = []
     cellname = "HL5PC"
-    celldir = "../../../cells/SkinnerLabHL5PC/"
+    celldir = get_abs_celldir("SkinnerLabHL5PC")
+    simdir = get_run_dir(cellname, "figure_01")
 
-    # run simulations in new directory so that they don't conflict with
-    # existing files.
-    currenttime = get_timestamp()
-    simdir = f"{currenttime}_{cellname}"
     os.mkdir(simdir)
     os.chdir(simdir)
 
