@@ -36,6 +36,8 @@ def run():
     os.mkdir(simdir)
     os.chdir(simdir)
 
+    cwd = os.getcwd()
+
     # 2 is "normal"
     for g in [0.0, 1.0, 2.0]:
         model_file_name = create_model(
@@ -72,7 +74,7 @@ def run():
             num_processors=8,
         )
 
-    os.chdir("../")
+    os.chdir(cwd)
     return simlist
 
 

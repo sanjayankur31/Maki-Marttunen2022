@@ -36,6 +36,8 @@ def run():
     os.mkdir(simdir)
     os.chdir(simdir)
 
+    cwd = os.getcwd()
+
     # [1.1024124036546668, 1.128775065748801]
     for mul_Ca_LVAst, mul_Ih in [
             [1.0, 1.0],
@@ -78,7 +80,8 @@ def run():
             num_processors=8,
         )
 
-    os.chdir("../")
+    os.chdir(cwd)
+    return simlist
 
 
 if __name__ == "__main__":
