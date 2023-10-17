@@ -14,6 +14,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(".")))
 sys.path.append(os.path.dirname(os.path.abspath("..")))
 
+import random
 import numpy as np
 import matplotlib
 
@@ -21,10 +22,17 @@ import neuroml
 from neuroml.utils import component_factory
 from neuroml.loaders import read_neuroml2_file
 from pyneuroml.pynml import write_neuroml2_file
+from pyneuroml.analysis import generate_current_vs_frequency_curve
 from pyneuroml import pynml
 from pyneuroml.lems import LEMSSimulation
 from pyneuroml.plot import generate_plot
-from common import get_timestamp, delete_neuron_special_dir, get_relative_dir
+from common import (get_timestamp, get_relative_dir, delete_neuron_special_dir, get_run_dir, get_abs_celldir, data_means_cz)
+
+try:
+    from common.CM import cz_data
+except ImportError:
+    print("Data set not found, using defaults")
+    cz_data = []
 
 # increase plot size
 matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
@@ -236,3 +244,95 @@ def simulate_model(model_file_name: str, cellname: str, plot: bool = True,
             xaxis="time (s)",
             yaxis="membrane potential (V)",
         )
+
+
+def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_na,
+           ifcurve_custom_amps, scz=True):
+    """Common runner for experiment 1.
+
+    This sets up and runs a simulation for each configuration, and then also
+    runs the i-f curve generator.
+
+    :param cellname: name of the cell
+    :param celldir: name of the celldir
+    :param num_data_points: number of ScZ data points to use
+    :param step_sim: toggle step current simulation
+    :param if_curve: toggle if curve simulation
+    :param sim_current_na: current to provide for simulation
+    :param ifcurve_custom_amps: list of currents for if curve generator
+    :param scz: toggle if we're using ScZ data or just g values
+    :returns: list of simulations
+    """
+    simlist = []
+    cellname = "L5PC"
+    celldir = get_abs_celldir("HayEtAlL5PC")
+    simdir = get_run_dir(cellname, "figure_01")
+    os.mkdir(simdir)
+    os.chdir(simdir)
+
+    cwd = os.getcwd()
+
+    if scz:
+        data = [
+            [1.0, 1.0],
+            [data_means_cz[0], 1.0],
+            [1.0, data_means_cz[1]],
+            data_means_cz
+        ]
+        data.extend(random.choices(cz_data, k=num_data_points))
+        print(f"Processing {len(data)} ScZ configurations")
+    else:
+        # for g
+        # 2 is "normal"
+        data = [0, 1.0, 2.0]
+        print(f"Processing {len(data)} non-ScZ configurations")
+
+    for d in data:
+        if scz:
+            mul_Ca_LVAst, mul_Ih = d
+            model_file_name, cell_doc_name = create_model(
+                cellname=cellname,
+                celldir=celldir,
+                current_nA=sim_current_na,
+                g_Ih_multiplier=f"{mul_Ih}",
+                g_Ca_LVAst_multiplier=f"{mul_Ca_LVAst}"
+            )
+        else:
+            mul_Ih = d
+            model_file_name, cell_doc_name = create_model(
+                cellname=cellname,
+                celldir=celldir,
+                current_nA="0.5 nA",
+                g_Ih_multiplier=f"{mul_Ih}",
+            )
+        simlist.append(model_file_name)
+        if step_sim:
+            simulate_model(model_file_name, cellname)
+
+        # delete compiled mod files
+        delete_neuron_special_dir()
+
+        if if_curve:
+            generate_current_vs_frequency_curve(
+                nml2_file=cell_doc_name,
+                cell_id=cellname,
+                custom_amps_nA=ifcurve_custom_amps,
+                analysis_duration=2000,
+                analysis_delay=200,
+                temperature="34 degC",
+                simulator="jNeuroML_NEURON",
+                plot_if=True,
+                plot_iv=True,
+                pre_zero_pulse=300,
+                post_zero_pulse=300,
+                plot_voltage_traces=True,
+                save_iv_figure_to=f"{model_file_name}_iv.png",
+                save_iv_data_to=f"{model_file_name}_iv.dat",
+                save_if_figure_to=f"{model_file_name}_if.png",
+                save_if_data_to=f"{model_file_name}_if.dat",
+                save_voltage_traces_to=f"{model_file_name}_v.png",
+                show_plot_already=False,
+            )
+
+    os.chdir(cwd)
+    return simlist
