@@ -14,6 +14,10 @@ import datetime
 import shutil
 
 
+# mean multiplier values of the scz variants: [Ca, Ih]
+data_means_cz = [1.1024124036546668, 1.128775065748801]
+
+
 def get_abs_celldir(cellfolder_name):
     """Get the absolute cell dir
 
