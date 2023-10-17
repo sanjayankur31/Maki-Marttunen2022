@@ -143,18 +143,18 @@ def create_model(
     nml_doc = component_factory(neuroml.NeuroMLDocument, id=nml_doc_name)
 
     cell_doc = read_neuroml2_file(f"{celldir}/{cellname}.cell.nml")
-    # we could even store the cell in a separate file and include that, but
-    # since we're only working with one file, we can include its NeuroML in our
-    # network file here
+
+    # modify and store cell file
     cell = cell_doc.cells[0]  # type: neuroml.Cell
-    nml_doc.add(cell)
-
     create_modified_cell(cell, g_Ih_multiplier, g_Ca_LVAst_multiplier)
-
-    # include channel file definitions
+    # update channel file paths
     for inc in cell_doc.includes:
-        updated_path = f"{get_relative_dir(celldir)}/{inc.href}"
-        nml_doc.add(neuroml.IncludeType, href=updated_path)
+        inc.href = f"{get_relative_dir(celldir)}/{inc.href}"
+    write_neuroml2_file(cell_doc, f"{cellname}.cell.nml")
+    print("Written cell file to: " + f"{cellname}.cell.nml")
+
+    # include cell file
+    nml_doc.add("IncludeType", href=f"{cellname}.cell.nml")
 
     network = nml_doc.add(neuroml.Network, id=f"{cellname}_net", validate=False)
     population = network.add(
