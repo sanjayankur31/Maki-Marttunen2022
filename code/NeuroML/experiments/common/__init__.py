@@ -31,6 +31,17 @@ def get_abs_celldir(cellfolder_name):
     return celldir_abs
 
 
+def get_relative_dir(source, destination):
+    """Get relative path of a destination from source
+
+    :param source: source path
+    :param destination: destination path
+    :returns: relative path
+
+    """
+    return os.path.relpath(destination, start=source)
+
+
 def get_timestamp():
     """Get current time stamp"""
     return datetime.datetime.now().strftime("%Y%m%d%H%M%S")
