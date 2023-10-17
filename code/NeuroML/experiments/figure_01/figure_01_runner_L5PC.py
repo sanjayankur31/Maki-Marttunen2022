@@ -24,7 +24,7 @@ def run():
         step_sim=True,
         if_curve=True,
         sim_current_na="0.5nA",
-        ifcurve_custom_amps=list(np.arange(0, 1.6, 0.01)),
+        ifcurve_custom_amps=list(np.arange(0, 1.6, 0.1)),
         scz=False)
 
 
