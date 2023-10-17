@@ -86,7 +86,7 @@ def get_segments_at_distances(celldir: str, cellname: str, segment_group: str,
             thisseg_width_at_d = 0
             thisseg = cell.get_segment(seg)
             # proximal diam + frac_along * delta(diam)
-            thisseg_width_at_d = (cell.get_actual_proximal(seg).diameter + ((abs(thisseg.distal.diameter - cell.get_actual_proximal(seg).diameter)/cell.get_segment_length(seg)) * frac_along))
+            thisseg_width_at_d = (cell.get_actual_proximal(seg).diameter + ((abs(thisseg.distal.diameter - cell.get_actual_proximal(seg).diameter) / cell.get_segment_length(seg)) * frac_along))
             if (seg in apical_segments) and (thisseg_width_at_d > segment_width_at_d):
                 thickest_segment_at_d = seg
                 fraction_along_at_d = frac_along
