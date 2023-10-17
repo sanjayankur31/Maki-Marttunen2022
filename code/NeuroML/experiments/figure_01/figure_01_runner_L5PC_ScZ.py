@@ -44,7 +44,7 @@ def run():
             [1.0, 1.128775065748801],
             [1.1024124036546668, 1.128775065748801]
     ]:
-        model_file_name = create_model(
+        model_file_name, cell_doc_name = create_model(
             cellname=cellname,
             celldir=celldir,
             current_nA="0.5 nA",
@@ -58,7 +58,7 @@ def run():
         delete_neuron_special_dir()
 
         generate_current_vs_frequency_curve(
-            nml2_file=model_file_name,
+            nml2_file=cell_doc_name,
             cell_id=cellname,
             custom_amps_nA=list(np.arange(0, 1.6, 0.01)),
             analysis_duration=2000,
@@ -76,7 +76,6 @@ def run():
             save_if_data_to=f"{model_file_name}_if.dat",
             save_voltage_traces_to=f"{model_file_name}_v.png",
             show_plot_already=False,
-            num_processors=8,
         )
 
     os.chdir(cwd)

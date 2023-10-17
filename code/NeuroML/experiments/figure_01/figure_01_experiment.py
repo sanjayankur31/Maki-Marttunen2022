@@ -132,16 +132,22 @@ def create_model(
 
     """
     timestamp = get_timestamp()
+
     nml_doc_name = f"net_{timestamp}_{cellname}"
+    cell_doc_name = f"{cellname}"
     if g_Ih_multiplier is not None:
         nml_doc_name += f"_{g_Ih_multiplier}"
+        cell_doc_name += f"_{g_Ih_multiplier}"
     if g_Ca_LVAst_multiplier is not None:
         nml_doc_name += f"_{g_Ca_LVAst_multiplier}"
+        cell_doc_name += f"_{g_Ca_LVAst_multiplier}"
     nml_doc_name += f"_{current_nA}"
+    cell_doc_name += f"_{current_nA}"
 
     nml_doc_name = nml_doc_name.replace(".", "_").replace(" ", "_")
-    nml_doc = component_factory(neuroml.NeuroMLDocument, id=nml_doc_name)
+    cell_doc_name = cell_doc_name.replace(".", "_").replace(" ", "_") + ".cell.nml"
 
+    nml_doc = component_factory(neuroml.NeuroMLDocument, id=nml_doc_name)
     cell_doc = read_neuroml2_file(f"{celldir}/{cellname}.cell.nml")
 
     # modify and store cell file
@@ -150,11 +156,11 @@ def create_model(
     # update channel file paths
     for inc in cell_doc.includes:
         inc.href = f"{get_relative_dir(celldir)}/{inc.href}"
-    write_neuroml2_file(cell_doc, f"{cellname}.cell.nml")
-    print("Written cell file to: " + f"{cellname}.cell.nml")
+    write_neuroml2_file(cell_doc, cell_doc_name)
+    print("Written cell file to: " + cell_doc_name)
 
     # include cell file
-    nml_doc.add("IncludeType", href=f"{cellname}.cell.nml")
+    nml_doc.add("IncludeType", href=cell_doc_name)
 
     network = nml_doc.add(neuroml.Network, id=f"{cellname}_net", validate=False)
     population = network.add(
@@ -178,7 +184,7 @@ def create_model(
     nml_doc_name += ".net.nml"
     write_neuroml2_file(nml_doc, nml_doc_name)
     print("Written network file to: " + nml_doc_name)
-    return nml_doc_name
+    return nml_doc_name, cell_doc_name
 
 
 def simulate_model(model_file_name: str, cellname: str, plot: bool = True,
