@@ -31,7 +31,7 @@ def get_abs_celldir(cellfolder_name):
     return celldir_abs
 
 
-def get_relative_dir(source, destination):
+def get_relative_dir(destination, source="."):
     """Get relative path of a destination from source
 
     :param source: source path
