@@ -20,7 +20,7 @@ from figure_01_experiment import runner
 def run():
     """Run simulations """
     return runner(
-        cellname="L5PC", celldir="HayEtAlL5PC", num_data_points=10,
+        cellname="L5PC", celldir="HayEtAlL5PC", num_data_points=200,
         step_sim=True,
         if_curve=True,
         sim_current_na="0.5nA",
