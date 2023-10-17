@@ -24,7 +24,7 @@ from pyneuroml.pynml import write_neuroml2_file
 from pyneuroml import pynml
 from pyneuroml.lems import LEMSSimulation
 from pyneuroml.plot import generate_plot
-from common import get_timestamp, delete_neuron_special_dir
+from common import get_timestamp, delete_neuron_special_dir, get_relative_dir
 
 # increase plot size
 matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
@@ -153,7 +153,7 @@ def create_model(
 
     # include channel file definitions
     for inc in cell_doc.includes:
-        updated_path = f"{celldir}/{inc.href}"
+        updated_path = f"{get_relative_dir(celldir)}/{inc.href}"
         nml_doc.add(neuroml.IncludeType, href=updated_path)
 
     network = nml_doc.add(neuroml.Network, id=f"{cellname}_net", validate=False)
