@@ -9,9 +9,11 @@ Copyright 2023 Ankur Sinha
 Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 """
 
+import os
 import numpy as np
 import json
 import matplotlib
+import typing
 
 import neuroml
 from neuroml.utils import component_factory
@@ -22,15 +24,16 @@ from pyneuroml.lems import LEMSSimulation
 from pyneuroml.plot import generate_plot
 
 from figure_01.figure_01_experiment import (create_modified_cell)
-from common import (delete_neuron_special_dir, get_timestamp)
+from common import (delete_neuron_special_dir, get_timestamp, get_relative_dir,
+                    get_abs_celldir, get_run_dir)
 
 
 # increase plot size
 matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
 
+
 def get_segments_at_distances(celldir: str, cellname: str, segment_group: str,
-                              distance_from_soma_inc: float, extra_points =
-                              list[float]):
+                              distance_from_soma_inc: float, extra_points: list[float]):
     """Get dict of thickest segment at various distances from the soma, and
     their fraction along values
 
@@ -83,7 +86,7 @@ def get_segments_at_distances(celldir: str, cellname: str, segment_group: str,
             thisseg_width_at_d = 0
             thisseg = cell.get_segment(seg)
             # proximal diam + frac_along * delta(diam)
-            thisseg_width_at_d = (cell.get_actual_proximal(seg).diameter + ((abs(thisseg.distal.diameter - cell.get_actual_proximal(seg).diameter)/cell.get_segment_length(seg)) * frac_along))
+            thisseg_width_at_d = (cell.get_actual_proximal(seg).diameter + ((abs(thisseg.distal.diameter - cell.get_actual_proximal(seg).diameter) / cell.get_segment_length(seg)) * frac_along))
             if (seg in apical_segments) and (thisseg_width_at_d > segment_width_at_d):
                 thickest_segment_at_d = seg
                 fraction_along_at_d = frac_along
@@ -110,8 +113,8 @@ def create_model(
     celldir: str,
     dist_vs_seg_dict: dict,
     current_nA: str = "0.5nA",
-    g_Ih_multiplier: str = None,
-    g_Ca_LVAst_multiplier: str = None,
+    g_Ih_multiplier: typing.Optional[str] = None,
+    g_Ca_LVAst_multiplier: typing.Optional[str] = None,
 ) -> str:
     """Create model with different cells receiving inputs at different parts,
     for a particular set of Ih and CA_LVast maximal conductances.
@@ -128,28 +131,33 @@ def create_model(
     """
     timestamp = get_timestamp()
     nml_doc_name = f"net_{timestamp}_{cellname}"
+    cell_doc_name = f"{cellname}"
     if g_Ih_multiplier is not None:
         nml_doc_name += f"_{g_Ih_multiplier}"
+        cell_doc_name += f"_{g_Ih_multiplier}"
     if g_Ca_LVAst_multiplier is not None:
         nml_doc_name += f"_{g_Ca_LVAst_multiplier}"
+        cell_doc_name += f"_{g_Ca_LVAst_multiplier}"
     nml_doc_name += f"_{current_nA}"
+    cell_doc_name += f"_{current_nA}"
 
     nml_doc_name = nml_doc_name.replace(".", "_").replace(" ", "_")
+    cell_doc_name = cell_doc_name.replace(".", "_").replace(" ", "_") + ".cell.nml"
+
     nml_doc = component_factory(neuroml.NeuroMLDocument, id=nml_doc_name)
-
     cell_doc = read_neuroml2_file(f"{celldir}/{cellname}.cell.nml")
-    # we could even store the cell in a separate file and include that, but
-    # since we're only working with one file, we can include its NeuroML in our
-    # network file here
+
+    # modify and store cell file
     cell = cell_doc.cells[0]  # type: neuroml.Cell
-    nml_doc.add(cell)
-
     create_modified_cell(cell, g_Ih_multiplier, g_Ca_LVAst_multiplier)
-
-    # include channel file definitions
+    # update channel file paths
     for inc in cell_doc.includes:
-        updated_path = f"{celldir}/{inc.href}"
-        nml_doc.add(neuroml.IncludeType, href=updated_path)
+        inc.href = f"{get_relative_dir(celldir)}/{inc.href}"
+    write_neuroml2_file(cell_doc, cell_doc_name)
+    print("Written cell file to: " + cell_doc_name)
+
+    # include cell file
+    nml_doc.add("IncludeType", href=cell_doc_name)
 
     # create a population of N cells, each with an input at different location
     network = nml_doc.add(neuroml.Network, id=f"{cellname}_net", validate=False)
@@ -269,3 +277,48 @@ def simulate_model(model_file_name: str, cellname: str,
         )
 
     return lems_simulation_file
+
+
+def runner(cellname, celldir):
+    """Main experiment runner
+
+    :param cellname: name of cell
+    :param celldir: name of cell directory
+    :returns: list of simulations
+
+    """
+    simlist = []
+    celldir = get_abs_celldir(celldir)
+    simdir = get_run_dir(cellname, "figure_02")
+
+    cwd = os.getcwd()
+    os.mkdir(simdir)
+    os.chdir(simdir)
+
+    dist_vs_seg_dict = get_segments_at_distances(celldir, cellname,
+                                                 "apical_dendrites_group", 50., [500])
+
+    # g: 0 is blocked, 1 is unchanged
+    # log scale starting at 10, but include 30, 100 for figure 2a
+    current_range = list(np.logspace(start=1, stop=2.5, num=20))
+    current_range.extend([30, 100])
+    current_range = sorted(current_range)
+    lems_file = ""
+    for g in [0.001, 1.0]:
+        for current in current_range:
+            model_file_name = create_model(
+                cellname=cellname,
+                celldir=celldir,
+                dist_vs_seg_dict=dist_vs_seg_dict,
+                current_nA=f"{current} nA",
+                g_Ih_multiplier=f"{g}",
+            )
+            lems_file = simulate_model(model_file_name, cellname, duration_ms=50.,
+                                       skip_run=False, plot=True)
+            simlist.append(lems_file)
+
+    # delete compiled mod files
+    delete_neuron_special_dir()
+
+    os.chdir(cwd)
+    return simlist
