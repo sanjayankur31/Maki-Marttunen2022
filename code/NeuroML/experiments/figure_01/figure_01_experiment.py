@@ -29,10 +29,10 @@ from pyneuroml.plot import generate_plot
 from common import (get_timestamp, get_relative_dir, delete_neuron_special_dir, get_run_dir, get_abs_celldir, data_means_cz)
 
 try:
-    from common.CM import cz_data
+    from common.CM import scz_data
 except ImportError:
     print("Data set not found, using defaults")
-    cz_data = []
+    scz_data = []
 
 # increase plot size
 matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
@@ -277,7 +277,11 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
             [1.0, data_means_cz[1]],
             data_means_cz
         ]
-        data.extend(random.choices(cz_data, k=num_data_points))
+        if len(scz_data) > 0:
+            if num_data_points > len(scz_data):
+                data.extend(scz_data)
+            else:
+                data.extend(random.choices(scz_data, k=num_data_points))
         print(f"Processing {len(data)} ScZ configurations")
     else:
         # for g
