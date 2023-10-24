@@ -279,7 +279,7 @@ def simulate_model(model_file_name: str, cellname: str,
     return lems_simulation_file
 
 
-def runner(cellname, celldir):
+def runner(cellname, celldir, scz):
     """Main experiment runner
 
     :param cellname: name of cell
@@ -289,7 +289,7 @@ def runner(cellname, celldir):
     """
     simlist = []
     celldir = get_abs_celldir(celldir)
-    simdir = get_run_dir(cellname, "figure_02")
+    simdir = get_run_dir(cellname, "figure_02", scz)
 
     cwd = os.getcwd()
     os.mkdir(simdir)

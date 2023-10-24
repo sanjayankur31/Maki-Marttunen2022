@@ -265,7 +265,7 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
     """
     simlist = []
     celldir = get_abs_celldir(celldir)
-    simdir = get_run_dir(cellname, "figure_01")
+    simdir = get_run_dir(cellname, "figure_01", scz)
     cwd = os.getcwd()
     os.mkdir(simdir)
     os.chdir(simdir)

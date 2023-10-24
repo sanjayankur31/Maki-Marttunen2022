@@ -60,10 +60,12 @@ def delete_neuron_special_dir():
         pass
 
 
-def get_run_dir(cellname, experiment_name, root=None, timestamp=None):
+def get_run_dir(cellname, experiment_name, root=None, timestamp=None, scz=False):
     """Get a new directory to run the simulations:
 
     {root}/{experiment_name}/{timestamp}_{cellname}/
+
+    If ScZ is true, a "_ScZ" suffix is also added.
 
     :param cellname: name of cell
     :type cellname: str
@@ -71,6 +73,8 @@ def get_run_dir(cellname, experiment_name, root=None, timestamp=None):
     :type root: str
     :param timestamp: timestamp string
     :type timestamp: str
+    :param scz: toggle ScZ
+    :type scz: bool
 
     :returns: string of path
     """
@@ -82,5 +86,7 @@ def get_run_dir(cellname, experiment_name, root=None, timestamp=None):
 
     root_abs = os.path.abspath(root)
     rootdir = f"{root_abs}/{experiment_name}/{timestamp}_{cellname}"
+    if scz is True:
+        rootdir += "_ScZ"
     print(f"Run dir is {rootdir}")
     return rootdir
