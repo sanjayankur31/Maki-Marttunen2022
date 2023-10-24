@@ -14,6 +14,7 @@ import numpy as np
 import json
 import matplotlib
 import typing
+from multiprocessing import Pool
 
 import neuroml
 from neuroml.utils import component_factory
@@ -24,7 +25,7 @@ from pyneuroml.lems import LEMSSimulation
 from pyneuroml.plot import generate_plot
 
 from figure_01.figure_01_experiment import (create_modified_cell)
-from common import (delete_neuron_special_dir, get_timestamp, get_relative_dir,
+from common import (get_timestamp, get_relative_dir,
                     get_abs_celldir, get_run_dir)
 
 
@@ -115,6 +116,7 @@ def create_model(
     current_nA: str = "0.5nA",
     g_Ih_multiplier: typing.Optional[str] = None,
     g_Ca_LVAst_multiplier: typing.Optional[str] = None,
+    cwd=None,
 ) -> str:
     """Create model with different cells receiving inputs at different parts,
     for a particular set of Ih and CA_LVast maximal conductances.
@@ -126,9 +128,15 @@ def create_model(
     :param g_Ca_LVAst_multiplier: multiplier for Ca_LVAst
     :param dist_vs_seg_dict: dict with keys as distance from soma, and value as
         segment id
+    :param cwd: directory to create and run in
+    :type cwd: string, path like
     :returns: network model file
 
     """
+    if cwd is not None:
+        os.mkdir(cwd)
+        os.chdir(cwd)
+    print(f"Creating in {os.getcwd()}")
     timestamp = get_timestamp()
     nml_doc_name = f"net_{timestamp}_{cellname}"
     cell_doc_name = f"{cellname}"
@@ -193,7 +201,7 @@ def create_model(
     ctr = 0
     for d, val in dist_vs_seg_dict.items():
         inputlist.add(
-            neuroml.Input, id=ctr, target=f"../{population.id}[{ctr}]/{cellname}",
+            neuroml.Input, id=ctr, target=f"../{population.id}[{ctr}]",
             segment_id=val[0],
             fraction_along=val[1],
             destination="synapses"
@@ -208,7 +216,7 @@ def create_model(
 
 def simulate_model(model_file_name: str, cellname: str,
                    plot: bool = True,
-                   skip_run=True, duration_ms=10) -> str:
+                   skip_run=True, duration_ms=10, cwd=None) -> str:
     """Simulate the model, generating current plots if required.
 
     :param model_file_name: name of model file
@@ -217,10 +225,14 @@ def simulate_model(model_file_name: str, cellname: str,
     :type cellname: str
     :param plot: toggle plotting
     :type plot: bool
+    :param cwd: directory to create and run in
+    :type cwd: string, path like
     :returns: name of LEMS simulation file
     :rtype: str
     """
-    delete_neuron_special_dir()
+    if cwd is not None:
+        os.chdir(cwd)
+    print(f"Running in {cwd}")
 
     network_id = f"{cellname}_net"
     simulation_id = model_file_name.split(".")[0]
@@ -237,6 +249,7 @@ def simulate_model(model_file_name: str, cellname: str,
     simulation.include_neuroml2_file(model_file_name)
 
     simulation.create_output_file("output0", "%s.v.dat" % simulation_id)
+    print(f"Here in {cwd}")
 
     model = read_neuroml2_file(model_file_name)
     inputlist = model.networks[0].input_lists[0].input
@@ -261,7 +274,7 @@ def simulate_model(model_file_name: str, cellname: str,
     if not skip_run and plot:
         data_array = np.loadtxt("%s.v.dat" % simulation_id)
         segs_data = {}
-        with open(f"{cellname}.segs.json", 'r') as f:
+        with open(f"../{cellname}.segs.json", 'r') as f:
             segs_data = json.load(f)
 
         x_vals = [data_array[:, 0]] * num_cells
@@ -285,46 +298,71 @@ def simulate_model(model_file_name: str, cellname: str,
     return lems_simulation_file
 
 
-def runner(cellname, celldir, scz):
+def runner(cellname, celldir, scz=False, num_processes=None):
     """Main experiment runner
 
     :param cellname: name of cell
     :param celldir: name of cell directory
+    :param scz: toggle whether scz is enabled or not (for run dir)
+    :param num_processes: number of processes to use in multiprocessing
+    :type num_processes: int (or Non)
     :returns: list of simulations
 
     """
-    simlist = []
     celldir = get_abs_celldir(celldir)
-    simdir = get_run_dir(cellname, "figure_02", scz)
+    expdir = get_run_dir(cellname, "figure_02", scz=scz)
 
-    cwd = os.getcwd()
-    os.mkdir(simdir)
-    os.chdir(simdir)
+    os.makedirs(expdir, exist_ok=False)
+    os.chdir(expdir)
 
     dist_vs_seg_dict = get_segments_at_distances(celldir, cellname,
                                                  "apical_dendrites_group", 50., [500])
 
     # g: 0 is blocked, 1 is unchanged
     # log scale starting at 10, but include 30, 100 for figure 2a
-    current_range = list(np.logspace(start=1, stop=2.5, num=20))
+    # current_range = list(np.logspace(start=1, stop=2.5, num=20))
+    current_range = []
     current_range.extend([30, 100])
     current_range = sorted(current_range)
-    lems_file = ""
-    for g in [0.001, 1.0]:
-        for current in current_range:
-            model_file_name = create_model(
-                cellname=cellname,
-                celldir=celldir,
-                dist_vs_seg_dict=dist_vs_seg_dict,
-                current_nA=f"{current} nA",
-                g_Ih_multiplier=f"{g}",
-            )
-            lems_file = simulate_model(model_file_name, cellname, duration_ms=50.,
-                                       skip_run=False, plot=True)
-            simlist.append(lems_file)
+    model_file_names = []
+    procs = []
+    ctr = 0
+    with Pool(processes=num_processes) as p:
+        for g in [0.001, 1.0]:
+            for current in current_range:
+                simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
+                proc = p.apply_async(
+                    create_model,
+                    kwds=dict(cellname=cellname,
+                              celldir=celldir,
+                              dist_vs_seg_dict=dist_vs_seg_dict,
+                              current_nA=f"{current} nA",
+                              g_Ih_multiplier=f"{g}",
+                              cwd=simdir
+                              )
+                )
+                procs.append(proc)
+                ctr += 1
+        for r in procs:
+            r.wait()
+        model_file_names = [p.get() for p in procs]
 
-    # delete compiled mod files
-    delete_neuron_special_dir()
+    print(f"Model file names are {model_file_names}")
+    # simulate models in parallel
+    simnames = []
+    procs = []
+    ctr = 0
+    with Pool(processes=num_processes) as p:
+        for model_file_name in model_file_names:
+            simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
+            proc = p.apply_async(func=simulate_model,
+                                 args=(model_file_name, cellname),
+                                 kwds=dict(duration_ms=50., skip_run=False, plot=True, cwd=simdir)
+                                 )
+            procs.append(proc)
+            ctr += 1
+        for r in procs:
+            r.wait()
+        simnames = [p.get() for p in procs]
 
-    os.chdir(cwd)
-    return simlist
+    return simnames
