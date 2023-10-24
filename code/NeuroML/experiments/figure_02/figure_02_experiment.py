@@ -225,7 +225,13 @@ def simulate_model(model_file_name: str, cellname: str,
     network_id = f"{cellname}_net"
     simulation_id = model_file_name.split(".")[0]
     simulation = LEMSSimulation(
-        sim_id=simulation_id, duration=duration_ms, dt=0.01, simulation_seed=123
+        sim_id=simulation_id, duration=duration_ms, dt=0.01,
+        simulation_seed=123,
+        meta={"for": "neuron",
+              "method": "cvode",
+              "abs_tolerance": "0.001",
+              "rel_tolerance": "0.001"
+              }
     )
     simulation.assign_simulation_target(network_id)
     simulation.include_neuroml2_file(model_file_name)
