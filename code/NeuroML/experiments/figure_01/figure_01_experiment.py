@@ -10,6 +10,7 @@ Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 """
 
 import sys
+import typing
 import os
 sys.path.append(os.path.dirname(os.path.abspath(".")))
 sys.path.append(os.path.dirname(os.path.abspath("..")))
@@ -17,6 +18,7 @@ sys.path.append(os.path.dirname(os.path.abspath("..")))
 import random
 import numpy as np
 import matplotlib
+from multiprocessing import Pool, Process
 
 import neuroml
 from neuroml.utils import component_factory
@@ -128,9 +130,9 @@ def create_modified_cell(cell, g_Ih_multiplier, g_Ca_LVAst_multiplier):
 
 
 def create_model(
-    cellname: str, celldir: str, current_nA: str = "0.5nA", g_Ih_multiplier: str =
-    None, g_Ca_LVAst_multiplier: str = None
-) -> str:
+    cellname: str, celldir: str, current_nA: str = "0.5nA", g_Ih_multiplier:
+    typing.Optional[str] = None, g_Ca_LVAst_multiplier: typing.Optional[str] = None, cwd=None
+) -> typing.Tuple[str, str]:
     """Create model with different values of conductance for the Ih channel.
 
     :param cellname: TODO
@@ -139,6 +141,9 @@ def create_model(
     :returns: network model file
 
     """
+    if cwd is not None:
+        os.mkdir(cwd)
+        os.chdir(cwd)
     timestamp = get_timestamp()
 
     nml_doc_name = f"net_{timestamp}_{cellname}"
@@ -196,7 +201,7 @@ def create_model(
 
 
 def simulate_model(model_file_name: str, cellname: str, plot: bool = True,
-                   skip_run=True):
+                   skip_run=True, cwd=None):
     """Simulate the model, generating current plots if required.
 
     :param model_file_name: name of model file
@@ -207,7 +212,8 @@ def simulate_model(model_file_name: str, cellname: str, plot: bool = True,
     :type plot: bool
     :returns: None
     """
-    delete_neuron_special_dir()
+    if cwd is not None:
+        os.chdir(cwd)
 
     network_id = f"{cellname}_net"
     simulation_id = model_file_name.split(".")[0]
@@ -247,7 +253,7 @@ def simulate_model(model_file_name: str, cellname: str, plot: bool = True,
 
 
 def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_na,
-           ifcurve_custom_amps, scz=True):
+           ifcurve_custom_amps, scz=True, num_processes=None):
     """Common runner for experiment 1.
 
     This sets up and runs a simulation for each configuration, and then also
@@ -265,10 +271,9 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
     """
     simlist = []
     celldir = get_abs_celldir(celldir)
-    simdir = get_run_dir(cellname, "figure_01", scz)
-    cwd = os.getcwd()
-    os.mkdir(simdir)
-    os.chdir(simdir)
+    expdir = get_run_dir(cellname, "figure_01", scz)
+    os.makedirs(expdir)
+    os.chdir(expdir)
 
     if scz:
         data = [
@@ -289,6 +294,7 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
         data = [0, 1.0, 2.0]
         print(f"Processing {len(data)} non-ScZ configurations")
 
+    ctr = 0
     for d in data:
         if scz:
             mul_Ca_LVAst, mul_Ih = d
@@ -297,7 +303,8 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
                 celldir=celldir,
                 current_nA=sim_current_na,
                 g_Ih_multiplier=f"{mul_Ih}",
-                g_Ca_LVAst_multiplier=f"{mul_Ca_LVAst}"
+                g_Ca_LVAst_multiplier=f"{mul_Ca_LVAst}",
+                cwd=f"{cellname}_{ctr}"
             )
         else:
             mul_Ih = d
@@ -306,35 +313,66 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
                 celldir=celldir,
                 current_nA="0.5 nA",
                 g_Ih_multiplier=f"{mul_Ih}",
+                cwd=f"{cellname}_{ctr}"
             )
-        simlist.append(model_file_name)
-        if step_sim:
-            simulate_model(model_file_name, cellname)
+        simlist.append((model_file_name, cell_doc_name))
+        ctr += 1
 
-        # delete compiled mod files
-        delete_neuron_special_dir()
+    # run simulations
+    if step_sim:
+        procs = []
+        ctr = 0
+        with Pool(processes=num_processes) as p:
+            for model_file_name, cell_doc_name in simlist:
+                proc = p.apply_async(
+                    simulate_model,
+                    args=(model_file_name, cellname),
+                    kwd=dict(cwd=f"{model_file_name}_{ctr}")
+                )
+                procs.append(proc)
+                ctr += 1
+            for r in procs:
+                r.wait()
 
-        if if_curve:
-            generate_current_vs_frequency_curve(
-                nml2_file=cell_doc_name,
-                cell_id=cellname,
-                custom_amps_nA=ifcurve_custom_amps,
-                analysis_duration=2000,
-                analysis_delay=200,
-                temperature="34 degC",
-                simulator="jNeuroML_NEURON",
-                plot_if=True,
-                plot_iv=True,
-                pre_zero_pulse=300,
-                post_zero_pulse=300,
-                plot_voltage_traces=True,
-                save_iv_figure_to=f"{model_file_name}_iv.png",
-                save_iv_data_to=f"{model_file_name}_iv.dat",
-                save_if_figure_to=f"{model_file_name}_if.png",
-                save_if_data_to=f"{model_file_name}_if.dat",
-                save_voltage_traces_to=f"{model_file_name}_v.png",
-                show_plot_already=False,
+    # do not use Pool here because we need to change the directory before we
+    # can call the function
+    if if_curve:
+        procs = []
+        ctr = 0
+        proc_ctr = 0
+        for model_file_name, cell_doc_name in simlist:
+            os.chdir(f"{cellname}_{ctr}")
+            proc = Process(
+                target=generate_current_vs_frequency_curve,
+                kwds=dict(nml2_file=cell_doc_name,
+                          cell_id=cellname,
+                          custom_amps_nA=ifcurve_custom_amps,
+                          analysis_duration=2000,
+                          analysis_delay=200,
+                          temperature="34 degC",
+                          simulator="jNeuroML_NEURON",
+                          plot_if=True,
+                          plot_iv=True,
+                          pre_zero_pulse=300,
+                          post_zero_pulse=300,
+                          plot_voltage_traces=True,
+                          save_iv_figure_to=f"{model_file_name}_iv.png",
+                          save_iv_data_to=f"{model_file_name}_iv.dat",
+                          save_if_figure_to=f"{model_file_name}_if.png",
+                          save_if_data_to=f"{model_file_name}_if.dat",
+                          save_voltage_traces_to=f"{model_file_name}_v.png",
+                          show_plot_already=False,
+                          )
             )
+            proc.start()
+            procs.append(proc)
+            ctr += 1
+            proc_ctr += 1
+            os.chdir("..")
+        # limit to num_processes, wait for these to finish
+        if proc_ctr >= num_processes:
+            for r in procs:
+                r.join()
+            proc_ctr = 0
 
-    os.chdir(cwd)
     return simlist
