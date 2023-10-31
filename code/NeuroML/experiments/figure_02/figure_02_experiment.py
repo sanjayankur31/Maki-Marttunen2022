@@ -320,8 +320,7 @@ def runner(cellname, celldir, scz=False, num_processes=None):
 
     # g: 0 is blocked, 1 is unchanged
     # log scale starting at 10, but include 30, 100 for figure 2a
-    # current_range = list(np.logspace(start=1, stop=2.5, num=20))
-    current_range = []
+    current_range = list(np.logspace(start=1, stop=2.5, num=20))
     current_range.extend([30, 100])
     current_range = sorted(current_range)
     model_file_names = []
