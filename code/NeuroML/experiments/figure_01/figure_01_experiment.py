@@ -296,6 +296,7 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
 
     ctr = 0
     for d in data:
+        simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
         if scz:
             mul_Ca_LVAst, mul_Ih = d
             model_file_name, cell_doc_name = create_model(
@@ -304,7 +305,7 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
                 current_nA=sim_current_na,
                 g_Ih_multiplier=f"{mul_Ih}",
                 g_Ca_LVAst_multiplier=f"{mul_Ca_LVAst}",
-                cwd=f"{cellname}_{ctr}"
+                cwd=simdir,
             )
         else:
             mul_Ih = d
@@ -313,7 +314,7 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
                 celldir=celldir,
                 current_nA="0.5 nA",
                 g_Ih_multiplier=f"{mul_Ih}",
-                cwd=f"{cellname}_{ctr}"
+                cwd=simdir
             )
         simlist.append((model_file_name, cell_doc_name))
         ctr += 1
@@ -324,10 +325,11 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
         ctr = 0
         with Pool(processes=num_processes) as p:
             for model_file_name, cell_doc_name in simlist:
+                simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
                 proc = p.apply_async(
                     simulate_model,
                     args=(model_file_name, cellname),
-                    kwd=dict(cwd=f"{model_file_name}_{ctr}")
+                    kwd=dict(cwd=simdir)
                 )
                 procs.append(proc)
                 ctr += 1
@@ -341,7 +343,8 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
         ctr = 0
         proc_ctr = 0
         for model_file_name, cell_doc_name in simlist:
-            os.chdir(f"{cellname}_{ctr}")
+            simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
+            os.chdir(simdir)
             proc = Process(
                 target=generate_current_vs_frequency_curve,
                 kwds=dict(nml2_file=cell_doc_name,
@@ -368,7 +371,6 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
             procs.append(proc)
             ctr += 1
             proc_ctr += 1
-            os.chdir("..")
         # limit to num_processes, wait for these to finish
         if proc_ctr >= num_processes:
             for r in procs:

@@ -15,12 +15,13 @@ sys.path.append(os.path.dirname(os.path.abspath("..")))
 
 import numpy as np
 from figure_01_experiment import runner
+from multiprocessing import set_start_method
 
 
 def run():
     """Run simulations """
     return runner(
-        cellname="L5PC", celldir="HayEtAlL5PC", num_data_points=200,
+        cellname="L5PC", celldir="HayEtAlL5PC", num_data_points=10,
         step_sim=True,
         if_curve=True,
         sim_current_na="0.5nA",
@@ -29,5 +30,6 @@ def run():
 
 
 if __name__ == "__main__":
+    set_start_method("spawn")
     simlist = run()
     print(simlist)
