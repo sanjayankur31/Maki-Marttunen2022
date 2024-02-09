@@ -17,7 +17,6 @@ sys.path.append(os.path.dirname(os.path.abspath("..")))
 import numpy as np
 
 from figure_01_experiment import runner
-from multiprocessing import set_start_method
 
 
 def run():
@@ -28,10 +27,10 @@ def run():
         if_curve=True,
         sim_current_na="0.5nA",
         ifcurve_custom_amps=list(np.arange(0, 150E-3, 10E-3)),
+        num_processes=4,
         scz=False)
 
 
 if __name__ == "__main__":
-    set_start_method("spawn")
     simlist = run()
     print(simlist)

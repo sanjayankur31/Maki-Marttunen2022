@@ -18,7 +18,8 @@ sys.path.append(os.path.dirname(os.path.abspath("..")))
 import random
 import numpy as np
 import matplotlib
-from multiprocessing import Pool, Process
+import inspect
+import textwrap
 
 import neuroml
 from neuroml.utils import component_factory
@@ -201,7 +202,7 @@ def create_model(
 
 
 def simulate_model(model_file_name: str, cellname: str, plot: bool = True,
-                   skip_run=True, cwd=None):
+                   skip_run=True, cwd=None) -> None:
     """Simulate the model, generating current plots if required.
 
     :param model_file_name: name of model file
@@ -229,6 +230,7 @@ def simulate_model(model_file_name: str, cellname: str, plot: bool = True,
     )
 
     lems_simulation_file = simulation.save_to_file()
+    print(f"Simulation file written: {lems_simulation_file}")
 
     pynml.run_lems_with_jneuroml_neuron(
         lems_simulation_file,
@@ -253,7 +255,7 @@ def simulate_model(model_file_name: str, cellname: str, plot: bool = True,
 
 
 def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_na,
-           ifcurve_custom_amps, scz=True, num_processes=None):
+           ifcurve_custom_amps, scz=True, num_processes=None, where="local"):
     """Common runner for experiment 1.
 
     This sets up and runs a simulation for each configuration, and then also
@@ -267,11 +269,15 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
     :param sim_current_na: current to provide for simulation
     :param ifcurve_custom_amps: list of currents for if curve generator
     :param scz: toggle if we're using ScZ data or just g values
+    :param where: where to run simulations
+        - local: run locally
+        - nsg: set up for submitting to nsg (account required)
+        - ucl: set up qsub for submitting to ucl cluster (account required)
     :returns: list of simulations
     """
     simlist = []
     celldir = get_abs_celldir(celldir)
-    expdir = get_run_dir(cellname, "figure_01", scz)
+    expdir = get_run_dir(cellname=cellname, experiment_name="figure_01", scz=scz)
     os.makedirs(expdir)
     os.chdir(expdir)
 
@@ -290,7 +296,7 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
         print(f"Processing {len(data)} ScZ configurations")
     else:
         # for g
-        # 2 is "normal"
+        # 1 is "normal"
         data = [0, 1.0, 2.0]
         print(f"Processing {len(data)} non-ScZ configurations")
 
@@ -321,60 +327,70 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
 
     # run simulations
     if step_sim:
-        procs = []
+        print("Generating step simulations")
         ctr = 0
-        with Pool(processes=num_processes) as p:
-            for model_file_name, cell_doc_name in simlist:
-                simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
-                proc = p.apply_async(
-                    simulate_model,
-                    args=(model_file_name, cellname),
-                    kwd=dict(cwd=simdir)
-                )
-                procs.append(proc)
-                ctr += 1
-            for r in procs:
-                r.wait()
+        for model_file_name, cell_doc_name in simlist:
+            simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
+            simulate_model(model_file_name, cellname, False, True, simdir),
+            ctr += 1
+        print("Generating simulations complete")
 
     # do not use Pool here because we need to change the directory before we
     # can call the function
     if if_curve:
-        procs = []
+        print("Generating i-f curve scripts")
         ctr = 0
-        proc_ctr = 0
         for model_file_name, cell_doc_name in simlist:
             simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
             os.chdir(simdir)
-            proc = Process(
-                target=generate_current_vs_frequency_curve,
-                kwds=dict(nml2_file=cell_doc_name,
-                          cell_id=cellname,
-                          custom_amps_nA=ifcurve_custom_amps,
-                          analysis_duration=2000,
-                          analysis_delay=200,
-                          temperature="34 degC",
-                          simulator="jNeuroML_NEURON",
-                          plot_if=True,
-                          plot_iv=True,
-                          pre_zero_pulse=300,
-                          post_zero_pulse=300,
-                          plot_voltage_traces=True,
-                          save_iv_figure_to=f"{model_file_name}_iv.png",
-                          save_iv_data_to=f"{model_file_name}_iv.dat",
-                          save_if_figure_to=f"{model_file_name}_if.png",
-                          save_if_data_to=f"{model_file_name}_if.dat",
-                          save_voltage_traces_to=f"{model_file_name}_v.png",
-                          show_plot_already=False,
-                          )
-            )
-            proc.start()
-            procs.append(proc)
+            with open("if-curve.py", 'w') as f:
+                print(
+                    inspect.cleandoc(
+                        textwrap.dedent(
+                            f"""
+                            #!/bin/python3
+                            from pyneuroml.analysis import generate_current_vs_frequency_curve
+
+                            generate_current_vs_frequency_curve(nml2_file="{cell_doc_name}",
+                                cell_id="{cellname}",
+                                custom_amps_nA={ifcurve_custom_amps},
+                                analysis_duration=2000,
+                                analysis_delay=200,
+                                temperature="34 degC",
+                                simulator="jNeuroML_NEURON",
+                                plot_if=True,
+                                plot_iv=True,
+                                pre_zero_pulse=300,
+                                post_zero_pulse=300,
+                                plot_voltage_traces=True,
+                                save_iv_figure_to="{model_file_name}_iv.png",
+                                save_iv_data_to=f"{model_file_name}_iv.dat",
+                                save_if_figure_to="{model_file_name}_if.png",
+                                save_if_data_to="{model_file_name}_if.dat",
+                                save_voltage_traces_to="{model_file_name}_v.png",
+                                show_plot_already=False)
+                                """
+                        )
+                    ),
+                    file=f
+                )
             ctr += 1
-            proc_ctr += 1
-        # limit to num_processes, wait for these to finish
-        if proc_ctr >= num_processes:
-            for r in procs:
-                r.join()
-            proc_ctr = 0
+        print("Generating i-f scripts complete")
+
+    simsdir = os.path.abspath(f"{expdir}/")
+    os.chdir(simsdir)
+    print("Printing script for local run using GNU Parallel")
+    with open("local.sh", 'w') as f:
+        print(
+            inspect.cleandoc(
+                textwrap.dedent(
+                    f"""
+                    #!/bin/bash
+                    parallel -j{num_processes} 'pushd {{}} && pynml LEMS*xml -neuron -nogui -run && python3 if-curve.py && popd' ::: *
+                    """
+                )
+            ),
+            file=f
+        )
 
     return simlist
