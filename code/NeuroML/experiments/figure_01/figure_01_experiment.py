@@ -9,27 +9,28 @@ Copyright 2022 Ankur Sinha
 Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 """
 
+import os
 import sys
 import typing
-import os
+
 sys.path.append(os.path.dirname(os.path.abspath(".")))
 sys.path.append(os.path.dirname(os.path.abspath("..")))
 
-import random
-import numpy as np
-import matplotlib
 import inspect
+import random
 import textwrap
 
+import matplotlib
 import neuroml
-from neuroml.utils import component_factory
+import numpy as np
+from common import (data_means_cz, get_abs_celldir, get_relative_dir,
+                    get_run_dir, get_timestamp)
 from neuroml.loaders import read_neuroml2_file
-from pyneuroml.pynml import write_neuroml2_file
-from pyneuroml.analysis import generate_current_vs_frequency_curve
+from neuroml.utils import component_factory
 from pyneuroml import pynml
 from pyneuroml.lems import LEMSSimulation
 from pyneuroml.plot import generate_plot
-from common import (get_timestamp, get_relative_dir, delete_neuron_special_dir, get_run_dir, get_abs_celldir, data_means_cz)
+from pyneuroml.pynml import write_neuroml2_file
 
 try:
     from common.CM import scz_data
@@ -386,7 +387,7 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
                 textwrap.dedent(
                     f"""
                     #!/bin/bash
-                    parallel -j{num_processes} 'pushd {{}} && pynml LEMS*xml -neuron -nogui -run && python3 if-curve.py && popd' ::: *
+                    parallel --bar -j{num_processes} 'pushd {{}} && pynml LEMS*xml -neuron -nogui -run && python3 if-curve.py && popd' ::: *
                     """
                 )
             ),
