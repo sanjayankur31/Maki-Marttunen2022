@@ -26,7 +26,7 @@ def run():
         sim_current_na="0.5nA",
         ifcurve_custom_amps=list(np.arange(0, 150E-3, 10E-3)),
         num_processes=4,
-        scz=False)
+        scz=True)
 
 
 if __name__ == "__main__":
