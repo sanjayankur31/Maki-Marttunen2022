@@ -9,25 +9,46 @@ Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 """
 
 
-import sys
-import textwrap
 from pathlib import Path
-import re
+from natsort import realsorted
 import logging
 import numpy
 from pyneuroml.plot.Plot import generate_plot
 import matplotlib
 from matplotlib import pyplot as plt
 
-logger = logging.Logger(__name__)
-logger.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 # increase plot size
 matplotlib.rcParams['figure.figsize'] = [19.2, 10.8]
 
 
-def plot_if(simfolder: str) -> None:
-    """Plot I-F curves from data in simfolder.
+def __get_gmul_camul(afile, scz=True):
+    """Get values from file name"""
+    if scz is False:
+        label = afile.name.split(".")[0].split("_")
+        logger.debug(f"Split {afile.name} into labels: {label}")
+        cellname = label[2]
+        gmul = float(f"{label[3]}.{label[4]}")  # type: float
+        camul = None
+    else:
+        label = afile.name.split(".")[0].split("_")
+        logger.debug(f"Split {afile.name} into labels: {label}")
+        cellname = label[2]
+        gmul = float(f"{label[3]}.{label[4]}")  # type: float
+        camul = float(f"{label[5]}.{label[6]}")  # type: float
+    return (cellname, gmul, camul)
+
+
+def __comparison_key(afile):
+    keys = __get_gmul_camul(afile)
+    logger.debug(f"Sorting by: ({keys[1]}, {keys[2]})")
+    return (keys[1], keys[2])
+
+
+def plot_if() -> None:
+    """Plot I-F curves from data.
 
     The datafiles must end in `_if.dat`. This will read all such files and
     generate a line for each.
@@ -39,11 +60,13 @@ def plot_if(simfolder: str) -> None:
     :returns: None
 
     """
-    simdir = Path(simfolder)
-    if not simdir.exists() or not simdir.is_dir():
-        raise ValueError(f"A directory named {simfolder} does not exist or cannot be accessed")
+    simdir = Path(".")
+    simdir_name = simdir.absolute().name
 
-    datafiles = sorted(list(simdir.glob("net*_if.dat")))
+    # sort by gmul: can't get it to sort by both
+    datafiles = realsorted(list(simdir.glob("**/net*_if.dat")), key=__comparison_key)
+
+    logger.debug(f"Sorted order is: {datafiles}")
 
     xvalues = []
     yvalues = []
@@ -52,32 +75,26 @@ def plot_if(simfolder: str) -> None:
     gmuls = []
     control_val = 0.0
     camuls = []
+    flabel = ""
     for afile in datafiles:
-        print(afile)
+        print(afile.name)
         data = numpy.loadtxt(afile)
         threshold_file = str(afile.parent) + f"/threshold_i_{afile.name}"
         threshold_data = float(numpy.loadtxt(threshold_file))
         logger.debug("Processing %s", afile)
-        # can be improved: should ideally store tags in model and get values
-        # from there instead of parsing filenames
-        if "ScZ" not in str(afile):
-            label = re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 ", afile.name.split(".")[0]).split("_")[2:]
-            cellname = label[0].split(" ")[0]
-            gmul = float(label[0].split(" ")[1])  # type: float
+        (cellname, gmul, camul) = __get_gmul_camul(afile, "ScZ" in simdir_name)
+
+        if camul is None:
+            flabel = f"g_Ih * {gmul:.3f}"
             if gmul == 1:
                 control_val = threshold_data
 
-            flabel = f"g_Ih * {gmul:.3f}"
         else:
-            label = re.sub(r"_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)_", r" \1.\2 \3.\4 \5.\6 ", afile.name.split(".")[0]).split("_")[2:]
-            cellname = label[0].split(" ")[0]
-            gmul = float(label[0].split(" ")[1])  # type: float
-            camul = float(label[0].split(" ")[2])  # type: float
+            # current = f"{label[5]}.{label[6]}"
             camuls.append(camul)
-
+            flabel = f"g_Ih * {gmul:.3f}, g_CaLVast * {camul:.3f}"
             if gmul == 1 and camul == 1:
                 control_val = threshold_data
-            flabel = f"g_Ih * {gmul:.3f}, g_CaLVast * {camul:.3f}"
 
         logger.debug("Label: %s", flabel)
         labels.append(flabel)
@@ -97,7 +114,7 @@ def plot_if(simfolder: str) -> None:
     else:
         title += ":  human "
 
-    if "ScZ" in datafiles[0].parent.name:
+    if "ScZ" in str(simdir_name):
         title += "(SCZ)"
     else:
         title += "(Health)"
@@ -116,15 +133,18 @@ def plot_if(simfolder: str) -> None:
     # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.gcf.html
     fig = plt.gcf()
     inset = fig.add_axes([0.15, 0.5, 0.1, 0.4])
+    # track labels, only print them once to prevent cluttering of plot
+    labels = []
     # if only g_Ih was changed, different inset
     if len(camuls) == 0:
         # to get the same random colours that matplotlib uses
         for i in range(0, len(gmuls)):
             barlabel = ((thresholds[i] - control_val) / control_val) * 100
             labelstr = f"{barlabel:+.2f}%"
-            print(labelstr)
+            logger.debug(f"labelstr is: {labelstr}")
             inset.bar(gmuls[i], thresholds[i])
-            if barlabel != 0:
+            if labelstr not in labels:
+                labels.append(labelstr)
                 inset.annotate(text=labelstr, xy=(gmuls[i], thresholds[i]),
                                xytext=(gmuls[i] + 0.5, thresholds[i] - 0.01))
         inset.set_xlabel("g_Ih *")
@@ -134,12 +154,14 @@ def plot_if(simfolder: str) -> None:
         for i in range(0, len(gmuls)):
             barlabel = ((thresholds[i] - control_val) / control_val) * 100
             labelstr = f"{barlabel:+.2f}%"
+            logger.debug(f"labelstr is: {labelstr}")
             inset.bar(i, thresholds[i])
             if gmuls[i] == 1 and camuls[i] == 1:
                 xtics.append("Control")
             else:
                 xtics.append(f"g_Ih * {gmuls[i]:.2f}, g_Ca_LVAst * {camuls[i]:.2f}")
-            if barlabel != 0:
+            if labelstr not in labels:
+                labels.append(labelstr)
                 inset.annotate(text=labelstr, xy=(i, thresholds[i]),
                                xytext=(i * 1.2, 0.9 * thresholds[i]))
         inset.set_xlabel("")
@@ -148,26 +170,9 @@ def plot_if(simfolder: str) -> None:
     inset.spines[['right', 'top']].set_visible(False)
     inset.set_ylabel("I (nA)")
     plt.tight_layout()
-    fig.savefig(f"{simdir}-F-I.png")
+    fig.savefig(f"{simdir_name}-F-I.png")
     plt.show()
 
 
-def usage():
-    """Print usage
-
-    :returns: None
-    """
-    print(textwrap.dedent(
-        f"""
-        Usage: {__file__.split("/")[-1]} <simulation folder>
-        """.strip()
-    ))
-
-
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        logging.error("Wrong arguments received")
-        usage()
-        sys.exit(-1)
-
-    plot_if(sys.argv[1])
+    plot_if()
