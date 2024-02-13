@@ -303,6 +303,7 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
 
     ctr = 0
     for d in data:
+        print(f"Generating model: {(ctr + 1)}/{len(data)}")
         simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
         if scz:
             mul_Ca_LVAst, mul_Ih = d
@@ -325,12 +326,14 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
             )
         simlist.append((model_file_name, cell_doc_name))
         ctr += 1
+        print("Generating models complete")
 
     # run simulations
     if step_sim:
         print("Generating step simulations")
         ctr = 0
         for model_file_name, cell_doc_name in simlist:
+            print(f"Generating step simulation: {(ctr + 1)}/{len(simlist)}")
             simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
             simulate_model(model_file_name, cellname, False, True, simdir),
             ctr += 1
@@ -381,13 +384,22 @@ def runner(cellname, celldir, num_data_points, step_sim, if_curve, sim_current_n
     simsdir = os.path.abspath(f"{expdir}/")
     os.chdir(simsdir)
     print("Printing script for local run using GNU Parallel")
+    if num_processes is not None:
+        num_processes = f"-j{num_processes}"
+    else:
+        num_processes = ""
+
     with open("local.sh", 'w') as f:
         print(
             inspect.cleandoc(
                 textwrap.dedent(
                     f"""
                     #!/bin/bash
-                    parallel --bar -j{num_processes} 'pushd {{}} && pynml LEMS*xml -neuron -nogui -run && python3 if-curve.py && popd' ::: *
+                    numfiles="$(ls | wc -l)"
+                    numfiles=$((numfiles - 1))
+                    numprocesses="{num_processes}"
+                    echo "Running $numfiles total simulations, $numprocesses in parallel"
+                    parallel --progress $numprocesses --total $numfiles 'pushd {{}} && pynml LEMS*xml -neuron -nogui -run && python3 if-curve.py && popd' ::: *
                     """
                 )
             ),
