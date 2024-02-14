@@ -16,15 +16,14 @@ sys.path.append(os.path.dirname(os.path.abspath(".")))
 sys.path.append(os.path.dirname(os.path.abspath("..")))
 
 from figure_02_experiment import runner
-from multiprocessing import set_start_method
 
 
 def run():
     """Run simulations """
-    return runner(cellname="L5PC", celldir="HayEtAlL5PC", num_processes=8)
+    return runner(cellname="L5PC", celldir="HayEtAlL5PC",
+                  email="ankur.sinha@ucl.ac.uk")
 
 
 if __name__ == "__main__":
-    set_start_method("spawn")
     simlist = run()
     print(simlist)

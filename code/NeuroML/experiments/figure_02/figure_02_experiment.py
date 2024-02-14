@@ -9,12 +9,14 @@ Copyright 2023 Ankur Sinha
 Author: Ankur Sinha <sanjay DOT ankur AT gmail DOT com>
 """
 
+import shutil
 import os
 import numpy as np
 import json
 import matplotlib
 import typing
-from multiprocessing import Pool
+import inspect
+import textwrap
 
 import neuroml
 from neuroml.utils import component_factory
@@ -22,7 +24,6 @@ from neuroml.loaders import read_neuroml2_file
 from pyneuroml.pynml import write_neuroml2_file
 from pyneuroml import pynml
 from pyneuroml.lems import LEMSSimulation
-from pyneuroml.plot import generate_plot
 
 from figure_01.figure_01_experiment import (create_modified_cell)
 from common import (get_timestamp, get_relative_dir,
@@ -158,9 +159,12 @@ def create_model(
     # modify and store cell file
     cell = cell_doc.cells[0]  # type: neuroml.Cell
     create_modified_cell(cell, g_Ih_multiplier, g_Ca_LVAst_multiplier)
-    # update channel file paths
+
+    # update includes to refer to common channel files
     for inc in cell_doc.includes:
-        inc.href = f"{get_relative_dir(celldir)}/{inc.href}"
+        if "channels" in inc.href:
+            inc.href = f"../{inc.href}"
+
     write_neuroml2_file(cell_doc, cell_doc_name)
     print("Written cell file to: " + cell_doc_name)
 
@@ -215,16 +219,13 @@ def create_model(
 
 
 def simulate_model(model_file_name: str, cellname: str,
-                   plot: bool = True,
                    skip_run=True, duration_ms=10, cwd=None) -> str:
-    """Simulate the model, generating current plots if required.
+    """Generate the simulation scripts
 
     :param model_file_name: name of model file
     :type model_file_name: str
     :param cellname: name of cell
     :type cellname: str
-    :param plot: toggle plotting
-    :type plot: bool
     :param cwd: directory to create and run in
     :type cwd: string, path like
     :returns: name of LEMS simulation file
@@ -262,58 +263,47 @@ def simulate_model(model_file_name: str, cellname: str,
 
     lems_simulation_file = simulation.save_to_file()
 
-    pynml.run_lems_with_jneuroml_neuron(
-        lems_simulation_file,
+    pynml.run_lems_with_jneuroml_netpyne(
+        lems_file_name=lems_simulation_file,
         max_memory="8G",
         nogui=True,
-        plot=False,
         verbose=True,
-        compile_mods=True,
-        skip_run=skip_run
+        only_generate_scripts=True,
     )
-    if not skip_run and plot:
-        data_array = np.loadtxt("%s.v.dat" % simulation_id)
-        segs_data = {}
-        with open(f"../{cellname}.segs.json", 'r') as f:
-            segs_data = json.load(f)
-
-        x_vals = [data_array[:, 0]] * num_cells
-        y_vals = []
-
-        for i in range(1, num_cells + 1):
-            y_vals.append(data_array[:, i])
-
-        generate_plot(
-            xvalues=x_vals,
-            yvalues=y_vals,
-            labels=list(segs_data.keys()),
-            title="Membrane potential",
-            show_plot_already=False,
-            save_figure_to="%s-v.png" % simulation_id,
-            xaxis="time (s)",
-            yaxis="membrane potential (V)",
-            ylim=[-0.085, 0.065]
-        )
-
     return lems_simulation_file
 
 
-def runner(cellname, celldir, scz=False, num_processes=None):
+def runner(cellname, celldir, scz=False, num_processes=80, memory="4G",
+           timestring="2:00:00", email=None):
     """Main experiment runner
 
     :param cellname: name of cell
     :param celldir: name of cell directory
     :param scz: toggle whether scz is enabled or not (for run dir)
-    :param num_processes: number of processes to use in multiprocessing
-    :type num_processes: int (or Non)
+    :param num_processes: number of processes to request on cluster (qsub)
+    :type num_processes: int
+    :param memory: memory to request on cluster (qsub)
+    :type memory: int
+    :param timestring: time string to use in qsub script
+    :type timestring: int (or Non)
+    :param email: email string to use in qsub script
+    :type email: str
     :returns: list of simulations
 
     """
     celldir = get_abs_celldir(celldir)
     expdir = get_run_dir(cellname, "figure_02", scz=scz)
+    emailstr = ""
+    if email is not None:
+        emailstr = f"#$ -M {email}"
 
     os.makedirs(expdir, exist_ok=False)
     os.chdir(expdir)
+
+    # copy over channel files: single copy in the experiment dir that all cells
+    # will refer to
+    print("Copying over channel files")
+    shutil.copytree(f"{get_relative_dir(celldir)}/channels", "channels")
 
     dist_vs_seg_dict = get_segments_at_distances(celldir, cellname,
                                                  "apical_dendrites_group", 50., [500])
@@ -324,44 +314,67 @@ def runner(cellname, celldir, scz=False, num_processes=None):
     current_range.extend([30, 100])
     current_range = sorted(current_range)
     model_file_names = []
-    procs = []
+    simnames = []
     ctr = 0
-    with Pool(processes=num_processes) as p:
-        for g in [0.001, 1.0]:
-            for current in current_range:
-                simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
-                proc = p.apply_async(
-                    create_model,
-                    kwds=dict(cellname=cellname,
-                              celldir=celldir,
-                              dist_vs_seg_dict=dist_vs_seg_dict,
-                              current_nA=f"{current} nA",
-                              g_Ih_multiplier=f"{g}",
-                              cwd=simdir
-                              )
+    for g in [0.001, 1.0]:
+        for current in current_range:
+            simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
+            model_file_name = create_model(
+                cellname=cellname,
+                celldir=celldir,
+                dist_vs_seg_dict=dist_vs_seg_dict,
+                current_nA=f"{current} nA",
+                g_Ih_multiplier=f"{g}",
+                cwd=simdir
+            )
+
+            sim_file_name = simulate_model(
+                model_file_name, cellname,
+                duration_ms=50., skip_run=True, cwd=simdir
+            )
+            # create qsub script
+            with open(f"{simdir}/{sim_file_name}.qsub.sh", 'w') as f:
+                print(
+                    inspect.cleandoc(
+                        textwrap.dedent(
+                            f"""
+                            #!/bin/bash -l
+
+                            #$ -pe mpi {num_processes}
+                            #$ -l mem={memory}
+                            #$ -l h_rt={timestring}
+                            #$ -cwd
+                            #$ -m be
+                            {emailstr}
+
+                            source ~/.venv/bin/activate
+                            nrnivmodl
+
+                            gerun python3 {sim_file_name.replace(".xml", "_netpyne.py")} -nogui
+                            """
+                        )
+                    ),
+                    file=f
                 )
-                procs.append(proc)
-                ctr += 1
-        for r in procs:
-            r.wait()
-        model_file_names = [p.get() for p in procs]
+            model_file_names.append(model_file_name)
+            simnames.append(sim_file_name)
+            ctr += 1
 
     print(f"Model file names are {model_file_names}")
-    # simulate models in parallel
-    simnames = []
-    procs = []
-    ctr = 0
-    with Pool(processes=num_processes) as p:
-        for model_file_name in model_file_names:
-            simdir = os.path.abspath(f"{expdir}/{cellname}_{ctr}/")
-            proc = p.apply_async(func=simulate_model,
-                                 args=(model_file_name, cellname),
-                                 kwds=dict(duration_ms=50., skip_run=False, plot=True, cwd=simdir)
-                                 )
-            procs.append(proc)
-            ctr += 1
-        for r in procs:
-            r.wait()
-        simnames = [p.get() for p in procs]
+
+    simsdir = os.path.abspath(f"{expdir}/")
+    os.chdir(simsdir)
+    with open("queue-up.sh", 'w') as f:
+        print(
+            inspect.cleandoc(
+                textwrap.dedent(
+                    """
+                    #!/bin/bash
+                    find . -maxdepth 1 -mindepth 1 -type d -exec bash -c "pushd '{}' && nrnivmodl && qsub LEMS*.qsub.sh && popd" \\;
+                    """
+                )
+            ),
+            file=f
+        )
 
     return simnames

@@ -16,6 +16,7 @@ import typing
 sys.path.append(os.path.dirname(os.path.abspath(".")))
 sys.path.append(os.path.dirname(os.path.abspath("..")))
 
+import shutil
 import inspect
 import random
 import textwrap
@@ -168,9 +169,10 @@ def create_model(
     # modify and store cell file
     cell = cell_doc.cells[0]  # type: neuroml.Cell
     create_modified_cell(cell, g_Ih_multiplier, g_Ca_LVAst_multiplier)
-    # update channel file paths
-    for inc in cell_doc.includes:
-        inc.href = f"{get_relative_dir(celldir)}/{inc.href}"
+
+    # copy over channel files
+    shutil.copytree(f"{get_relative_dir(celldir)}/channels", "channels")
+
     write_neuroml2_file(cell_doc, cell_doc_name)
     print("Written cell file to: " + cell_doc_name)
 
