@@ -16,7 +16,6 @@ import typing
 sys.path.append(os.path.dirname(os.path.abspath(".")))
 sys.path.append(os.path.dirname(os.path.abspath("..")))
 
-import shutil
 import inspect
 import random
 import textwrap
@@ -169,10 +168,13 @@ def create_model(
     # modify and store cell file
     cell = cell_doc.cells[0]  # type: neuroml.Cell
     create_modified_cell(cell, g_Ih_multiplier, g_Ca_LVAst_multiplier)
-
-    # copy over channel files
-    shutil.copytree(f"{get_relative_dir(celldir)}/channels", "channels")
-
+    # update channel file paths
+    # TODO: update as per figure 2 experiment where we copy over all the
+    # channel files: that will mean that all files are kept together in the
+    # folder. Otherwise users have to re-create the directory structure used
+    # here
+    for inc in cell_doc.includes:
+        inc.href = f"{get_relative_dir(celldir)}/{inc.href}"
     write_neuroml2_file(cell_doc, cell_doc_name)
     print("Written cell file to: " + cell_doc_name)
 
