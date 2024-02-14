@@ -370,7 +370,7 @@ def runner(cellname, celldir, scz=False, num_processes=80, memory="4G",
                 textwrap.dedent(
                     """
                     #!/bin/bash
-                    find . -maxdepth 1 -mindepth 1 -type d -exec bash -c "pushd '{}' && nrnivmodl && qsub LEMS*.qsub.sh && popd" \\;
+                    find . -name "{cellname}*" -maxdepth 1 -mindepth 1 -type d -exec bash -c "pushd '{}' && nrnivmodl && qsub LEMS*.qsub.sh && popd" \\;
                     """
                 )
             ),
